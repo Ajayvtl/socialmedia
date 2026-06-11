@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { Send, Search, Info, Image as ImageIcon, Smile, MoreVertical, Loader2, ArrowLeft, Check, CheckCheck, Settings, FileBox } from "lucide-react";
 import { io, Socket } from "socket.io-client";
@@ -10,7 +10,7 @@ import EmojiPicker, { Theme } from "emoji-picker-react";
 import { GiphyFetch } from '@giphy/js-fetch-api';
 import { Grid } from '@giphy/react-components';
 
-const gf = new GiphyFetch(process.env.NEXT_PUBLIC_GIPHY_API_KEY || 'sXpGFDGZs0Dv1mmz9DmMQYy9yS7Xk44G');
+const gf = new GiphyFetch(process.env.NEXT_PUBLIC_GIPHY_API_KEY || 'glSpxrXW11B6tS9ZtJ6Vz7j2jJ4R4K2V');
 
 export default function InboxPage() {
   const [activeChat, setActiveChat] = useState<any>(null);
@@ -29,6 +29,12 @@ export default function InboxPage() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [gifSearchTerm, setGifSearchTerm] = useState("");
+
+  const fetchGifs = useCallback((offset: number) => {
+    return gifSearchTerm 
+      ? gf.search(gifSearchTerm, { offset, limit: 10 }) 
+      : gf.trending({ offset, limit: 10 });
+  }, [gifSearchTerm]);
 
   useEffect(() => {
     const init = async () => {

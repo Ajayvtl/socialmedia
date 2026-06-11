@@ -114,7 +114,7 @@ export default function TopNavbar() {
         try {
             const { data } = await api.get('/notifications');
             const items = Array.isArray(data.data?.items) ? data.data.items : [];
-            setNotifications(items.filter((notif: any) => !notif.is_read));
+            setNotifications(items); // DO NOT filter out read notifications
             setUnreadCount(Number(data.data?.pagination?.unread || 0));
         } catch (e) {
             console.error("Failed to load notifications");
@@ -135,30 +135,67 @@ export default function TopNavbar() {
     const markRead = async (id: number) => {
         try {
             await api.put(`/notifications/${id}/read`);
-            setNotifications((prev) => prev.filter((notif: any) => notif.id !== id));
+            setNotifications((prev) => 
+                prev.map((notif: any) => notif.id === id ? { ...notif, is_read: 1 } : notif)
+            );
             setUnreadCount((prev) => Math.max(0, prev - 1));
-            setNotificationActionState((prev) => {
-                if (!prev[id]) return prev;
-                const next = { ...prev };
-                delete next[id];
-                return next;
-            });
-            fetchNotifications();
         } catch (e) { }
     };
 
     const markAllRead = async () => {
         try {
             await api.put(`/notifications/read-all`);
-            setNotifications([]);
+            setNotifications((prev) => prev.map((notif: any) => ({ ...notif, is_read: 1 })));
             setUnreadCount(0);
-            setNotificationActionState({});
-            fetchNotifications();
         } catch (e) { }
     };
 
+    const clearAll = async () => {
+        try {
+            await api.delete(`/notifications/clear-all`);
+            setNotifications([]);
+            setUnreadCount(0);
+            setNotificationActionState({});
+        } catch (e) { }
+    };
+
+    const handleNotificationClick = (notif: any) => {
+        if (!notif.is_read) {
+            markRead(notif.id);
+        }
+        setShowNotifMenu(false);
+
+        const meta = typeof notif.meta === 'string' ? JSON.parse(notif.meta) : (notif.meta || {});
+        
+        switch (notif.type) {
+            case "MESSAGE":
+            case "message":
+                if (meta.threadId) router.push(`/dapp/inbox?thread=${meta.threadId}`);
+                else router.push(`/dapp/inbox`);
+                break;
+            case "connection_request":
+            case "connection_accepted":
+                if (meta.senderUsername) router.push(`/dapp/u/${meta.senderUsername}`);
+                break;
+            case "post_like":
+            case "comment_reply":
+                if (meta.postId) router.push(`/dapp/post/${meta.postId}`);
+                break;
+            case "family_relationship":
+                router.push(`/dapp/family-graph`);
+                break;
+            case "memory_shared":
+                if (meta.circleId) router.push(`/dapp/memory-wallet/circles/${meta.circleId}`);
+                else router.push(`/dapp/memory-wallet`);
+                break;
+            default:
+                if (notif.action_url) router.push(notif.action_url);
+                break;
+        }
+    };
+
     const settleConnectionNotification = async (notif: any, accepted: boolean) => {
-        const meta = safeObject<any>(notif.meta);
+        const meta = typeof notif.meta === 'string' ? JSON.parse(notif.meta) : (notif.meta || {});
         if (!meta?.senderId) return;
 
         try {
@@ -183,6 +220,105 @@ export default function TopNavbar() {
         } catch (error) {
             console.error("Failed to handle connection request", error);
         }
+    };
+
+    const renderNotificationItem = (notif: any) => {
+        const meta = typeof notif.meta === 'string' ? JSON.parse(notif.meta) : (notif.meta || {});
+        const messageCopy = notif.type === "MESSAGE" ? "You have a new message." : notif.message;
+
+        if (notif.type === 'connection_request' && meta?.senderId) {
+            const actionState = notificationActionState[notif.id];
+            return (
+                <div
+                    key={notif.id}
+                    className={`rounded-2xl border px-3 py-3 transition ${!notif.is_read
+                        ? "border-blue-200/70 bg-blue-50/70 dark:border-blue-800/40 dark:bg-blue-900/15"
+                        : "border-transparent bg-white/0 hover:border-slate-200/70 hover:bg-slate-50/70 dark:hover:border-slate-700 dark:hover:bg-slate-800/70"
+                    }`}
+                >
+                    <div className="flex items-start gap-3">
+                        <Link href={`/dapp/u/${meta.senderUsername}`} onClick={() => setShowNotifMenu(false)} className="shrink-0">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+                                {meta.senderAvatar ? <img src={getMediaUrl(meta.senderAvatar)} className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-slate-400" />}
+                            </div>
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                            <p className={`text-sm leading-5 ${!notif.is_read ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                                <Link href={`/dapp/u/${meta.senderUsername}`} onClick={() => setShowNotifMenu(false)} className="hover:underline text-blue-500">
+                                    {meta.senderName}
+                                </Link> wants to connect
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-1">{new Date(notif.created_at).toLocaleTimeString()}</p>
+                            {actionState ? (
+                                <div className={`mt-3 flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold shadow-sm backdrop-blur-sm ${
+                                    actionState === "accepted"
+                                        ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+                                        : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-300"
+                                }`}>
+                                    <span className={`flex h-6 w-6 items-center justify-center rounded-full ${
+                                        actionState === "accepted"
+                                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                                                    : "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"
+                                    }`}>
+                                        {actionState === "accepted" ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                                    </span>
+                                    <div className="min-w-0">
+                                        <p className="leading-none">{actionState === "accepted" ? "Accepted" : "Declined"}</p>
+                                        <p className="mt-0.5 text-[10px] font-normal opacity-70">Notification saved in history</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                    <button
+                                        onClick={() => settleConnectionNotification(notif, true)}
+                                        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/35"
+                                    >
+                                        <Check className="w-3.5 h-3.5"/> Accept
+                                    </button>
+                                    <button
+                                        onClick={() => settleConnectionNotification(notif, false)}
+                                        className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-300 dark:hover:bg-rose-900/35"
+                                    >
+                                        <X className="w-3.5 h-3.5"/> Decline
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div
+                key={notif.id}
+                onClick={() => handleNotificationClick(notif)}
+                className={`mx-1 mb-2 rounded-2xl px-3 py-3 transition cursor-pointer flex gap-3 items-start border ${!notif.is_read
+                    ? 'border-blue-200/60 bg-blue-50/70 dark:border-blue-800/40 dark:bg-blue-900/15'
+                    : 'border-transparent bg-white/0 hover:border-slate-200/70 hover:bg-slate-50/70 dark:hover:border-slate-700 dark:hover:bg-slate-800/70'
+                }`}
+            >
+                {meta?.senderAvatar && (
+                    <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700">
+                        <img src={getMediaUrl(meta.senderAvatar)} className="w-full h-full object-cover" />
+                    </div>
+                )}
+                {!meta?.senderAvatar && (
+                    <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center border border-indigo-200 dark:border-indigo-800">
+                        <Bell className="w-4 h-4 text-indigo-500" />
+                    </div>
+                )}
+                <div className="flex-1 min-w-0">
+                    <p className={`text-sm ${!notif.is_read ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                        {notif.title}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">{messageCopy}</p>
+                    <p className="text-[10px] text-slate-400 mt-2 text-right">
+                        {new Date(notif.created_at).toLocaleTimeString()}
+                    </p>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -332,108 +468,26 @@ export default function TopNavbar() {
                         <div className="absolute right-0 top-full mt-2 w-80 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 dark:border-slate-700 dark:bg-slate-900/95">
                             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4 dark:border-slate-700">
                                 <h3 className="font-semibold text-slate-800 dark:text-white">Notifications</h3>
-                                <button onClick={markAllRead} className="text-xs font-semibold text-blue-500 hover:text-blue-400 hover:underline">Mark all read</button>
+                                <div className="flex gap-3">
+                                    <button onClick={markAllRead} className="text-xs font-semibold text-blue-500 hover:text-blue-400 hover:underline">Mark all read</button>
+                                    <button onClick={clearAll} className="text-xs font-semibold text-rose-500 hover:text-rose-400 hover:underline">Clear all</button>
+                                </div>
                             </div>
                             <div className="max-h-80 overflow-y-auto p-2">
                                 {notifications.length === 0 ? (
                                     <div className="p-8 text-center text-gray-500 text-sm">No notifications</div>
                                 ) : (
-                                    notifications.map((notif: any) => {
-                                        const meta = safeObject<any>(notif.meta);
-                                        const messageCopy =
-                                            notif.type === "MESSAGE"
-                                                ? "You have a new message."
-                                                : notif.message;
-
-                                        if (notif.type === 'connection_request' && meta?.senderId) {
-                                            const actionState = notificationActionState[notif.id];
-                                            return (
-                                                <div
-                                                    key={notif.id}
-                                                    className={`rounded-2xl border px-3 py-3 transition ${!notif.is_read
-                                                        ? "border-blue-200/70 bg-blue-50/70 dark:border-blue-800/40 dark:bg-blue-900/15"
-                                                        : "border-transparent bg-white/0 hover:border-slate-200/70 hover:bg-slate-50/70 dark:hover:border-slate-700 dark:hover:bg-slate-800/70"
-                                                    }`}
-                                                >
-                                                    <div className="flex items-start gap-3">
-                                                        <Link href={`/dapp/u/${meta.senderUsername}`} onClick={() => setShowNotifMenu(false)} className="shrink-0">
-                                                            <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                                                                {meta.senderAvatar ? <img src={getMediaUrl(meta.senderAvatar)} className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-slate-400" />}
-                                                            </div>
-                                                        </Link>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className={`text-sm leading-5 ${!notif.is_read ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
-                                                                <Link href={`/dapp/u/${meta.senderUsername}`} onClick={() => setShowNotifMenu(false)} className="hover:underline text-blue-500">
-                                                                    {meta.senderName}
-                                                                </Link> wants to connect
-                                                            </p>
-                                                            <p className="text-[10px] text-slate-400 mt-1">{new Date(notif.created_at).toLocaleTimeString()}</p>
-                                                            {actionState ? (
-                                                                <div className={`mt-3 flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold shadow-sm backdrop-blur-sm ${
-                                                                    actionState === "accepted"
-                                                                        ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
-                                                                        : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-300"
-                                                                }`}>
-                                                                    <span className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                                                                        actionState === "accepted"
-                                                                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                                                                                    : "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"
-                                                                    }`}>
-                                                                        {actionState === "accepted" ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                                                                    </span>
-                                                                    <div className="min-w-0">
-                                                                        <p className="leading-none">{actionState === "accepted" ? "Accepted" : "Declined"}</p>
-                                                                        <p className="mt-0.5 text-[10px] font-normal opacity-70">Removed from notifications</p>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex flex-wrap gap-2 mt-3">
-                                                                    <button
-                                                                        onClick={() => settleConnectionNotification(notif, true)}
-                                                                        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/35"
-                                                                    >
-                                                                        <Check className="w-3.5 h-3.5"/> Accept
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => settleConnectionNotification(notif, false)}
-                                                                        className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-300 dark:hover:bg-rose-900/35"
-                                                                    >
-                                                                        <X className="w-3.5 h-3.5"/> Decline
-                                                                    </button>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        }
-
-                                        return (
-                                            <div
-                                                key={notif.id}
-                                                onClick={() => markRead(notif.id)}
-                                                className={`mx-1 mb-2 rounded-2xl px-3 py-3 transition cursor-pointer flex gap-3 items-start border ${!notif.is_read
-                                                    ? 'border-blue-200/60 bg-blue-50/70 dark:border-blue-800/40 dark:bg-blue-900/15'
-                                                    : 'border-transparent bg-white/0 hover:border-slate-200/70 hover:bg-slate-50/70 dark:hover:border-slate-700 dark:hover:bg-slate-800/70'
-                                                }`}
-                                            >
-                                                {meta?.senderAvatar && (
-                                                    <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700">
-                                                        <img src={getMediaUrl(meta.senderAvatar)} className="w-full h-full object-cover" />
-                                                    </div>
-                                                )}
-                                                <div className="flex-1 min-w-0">
-                                                    <p className={`text-sm ${!notif.is_read ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
-                                                        {notif.title}
-                                                    </p>
-                                                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">{messageCopy}</p>
-                                                    <p className="text-[10px] text-slate-400 mt-2 text-right">
-                                                        {new Date(notif.created_at).toLocaleTimeString()}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
+                                    <>
+                                        {notifications.filter((n: any) => !n.is_read).length > 0 && (
+                                            <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unread ({notifications.filter((n: any) => !n.is_read).length})</div>
+                                        )}
+                                        {notifications.filter((n: any) => !n.is_read).map((notif: any) => renderNotificationItem(notif))}
+                                        
+                                        {notifications.filter((n: any) => n.is_read).length > 0 && (
+                                            <div className="px-3 py-2 mt-2 border-t border-slate-100 dark:border-slate-800/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Earlier</div>
+                                        )}
+                                        {notifications.filter((n: any) => n.is_read).map((notif: any) => renderNotificationItem(notif))}
+                                    </>
                                 )}
                             </div>
                         </div>

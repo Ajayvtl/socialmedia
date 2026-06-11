@@ -39,6 +39,7 @@ interface AuthContextType {
     selectHotel: (hotelId: number) => void;
     login: (token: string, user: User, hotels: Hotel[], permissions?: string[], skipRedirect?: boolean) => void;
     logout: () => void;
+    updateUser: (updates: Partial<User>) => void;
     isLoading: boolean;
 }
 
@@ -262,12 +263,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
+    const updateUser = (updates: Partial<User>) => {
+        if (!user) return;
+        const updatedUser = { ...user, ...updates };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+    };
+
     const logout = () => {
         const isEndUser = user?.role === 'USER';
         setToken(null);
         setUser(null);
         setAvailableHotels([]);
         setCurrentHotel(null);
+
 
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -279,7 +288,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, availableHotels, currentHotel, selectHotel, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, token, availableHotels, currentHotel, selectHotel, login, logout, updateUser, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

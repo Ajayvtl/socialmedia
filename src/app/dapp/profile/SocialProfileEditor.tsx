@@ -5,8 +5,10 @@ import api, { getMediaUrl } from "@/lib/api";
 import { safeArray } from "@/lib/utils";
 import ImageCropperModal from "@/components/ui/ImageCropperModal";
 import { getCroppedImg } from "@/lib/cropImage";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SocialProfileEditor() {
+  const { updateUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -95,8 +97,17 @@ export default function SocialProfileEditor() {
     setSaving(true);
     try {
       await api.put("/social-profile", formData);
+      
+      // Sync basic details back to local Auth user store
+      const fullName = `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || formData.username;
+      updateUser({ 
+        name: fullName, 
+        avatar: formData.avatar_url 
+      });
+
       toast.success("Social profile updated!");
       setEditMode(false);
+      window.location.reload();
     } catch (error) {
       toast.error("Failed to update social profile");
     } finally {
@@ -145,6 +156,12 @@ export default function SocialProfileEditor() {
       
       // Auto-save so it reflects across the platform
       await api.put("/social-profile", updatedData);
+
+      // If it's universal avatar, update the local Auth user immediately
+      if (activePersonaTab === 'universal') {
+         updateUser({ avatar: newUrl });
+      }
+
       toast.success(`${activePersonaTab.charAt(0).toUpperCase() + activePersonaTab.slice(1)} picture updated!`);
       
       // Hard refresh to ensure top nav and other contexts catch the new image
@@ -224,11 +241,16 @@ export default function SocialProfileEditor() {
               {activePersonaTab === 'universal' ? 'Universal Avatar' : `${activePersonaTab} Persona Avatar`}
             </p>
             <div className="relative group w-24 h-24 rounded-full border-4 border-[#2b3139] overflow-hidden bg-[#0b0e11] flex items-center justify-center">
-              {(activePersonaTab === 'universal' ? formData.avatar_url : (formData as any)[`${activePersonaTab}_avatar_url`]) ? (
-                <img src={getMediaUrl(activePersonaTab === 'universal' ? formData.avatar_url : (formData as any)[`${activePersonaTab}_avatar_url`])} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-8 h-8 text-[#848e9c]" />
-              )}
+              {(() => {
+                const currentDp = activePersonaTab === 'universal' 
+                  ? formData.avatar_url 
+                  : ((formData as any)[`${activePersonaTab}_avatar_url`] || formData.avatar_url);
+                return currentDp ? (
+                  <img src={getMediaUrl(currentDp)} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-8 h-8 text-[#848e9c]" />
+                );
+              })()}
               
               <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
                 {uploadingImage ? (
@@ -240,7 +262,7 @@ export default function SocialProfileEditor() {
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileSelect} disabled={uploadingImage} />
               </label>
             </div>
-            <p className="text-xs text-[#848e9c]">Click to change avatar</p>
+            <p className="text-xs text-[#848e9c]">{activePersonaTab !== 'universal' && !(formData as any)[`${activePersonaTab}_avatar_url`] ? 'Using Universal Default (Click to override)' : 'Click to change avatar'}</p>
           </div>
 
           {activePersonaTab === 'universal' ? (
@@ -273,8 +295,8 @@ export default function SocialProfileEditor() {
                 type="text"
                 value={(formData as any)[`${activePersonaTab}_name`] || ""}
                 onChange={(e) => setFormData({...formData, [`${activePersonaTab}_name`]: e.target.value})}
-                className="mt-1 w-full rounded-lg border border-[#2b3139] bg-[#111418] p-2 text-sm text-[#f5f5f5] focus:border-[#5bbcff] focus:outline-none"
-                placeholder={`e.g. ${activePersonaTab === 'family' ? 'Dad / Honey' : activePersonaTab === 'business' ? 'Dr. Smith' : 'Anonymous User'}`}
+                className="mt-1 w-full rounded-lg border border-[#2b3139] bg-[#111418] p-2 text-sm text-[#f5f5f5] focus:border-[#5bbcff] focus:outline-none placeholder:text-[#848e9c]/50"
+                placeholder={`Default: ${formData.first_name} ${formData.last_name}`}
               />
             </div>
           )}

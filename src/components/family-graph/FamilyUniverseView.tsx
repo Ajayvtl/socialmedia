@@ -128,11 +128,10 @@ function ConnectionsLines({ nodes }: { nodes: any[] }) {
         
         const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
         
-        return (
-          <line key={`line_${i}`} geometry={lineGeom}>
-            <lineBasicMaterial color="#ffffff" transparent opacity={0.15} />
-          </line>
-        );
+        const material = new THREE.LineBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.15 });
+        const lineObj = new THREE.Line(lineGeom, material);
+        
+        return <primitive key={`line_${i}`} object={lineObj} />;
       })}
     </>
   );

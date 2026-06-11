@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Compass, Users, Calendar, MessageSquare, Shield, Settings, Sparkles, Check, Trash2, Sliders } from "lucide-react";
-import { Modal } from "./Modal";
 import { FocusRing } from "./FocusRing";
 import { cn } from "@/lib/utils";
 
@@ -222,11 +221,15 @@ export function AuroraCommandPalette({
   if (!isOpen) return null;
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      className="max-w-2xl p-0 overflow-hidden border border-border/80 bg-surface rounded-2xl shadow-floating"
-    >
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] sm:pt-[20vh] px-4">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-background/70 backdrop-blur-md animate-in fade-in duration-200"
+        onClick={onClose}
+      />
+      
+      {/* Content */}
+      <div className="relative w-full max-w-2xl bg-surface border border-border/80 rounded-2xl shadow-floating overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
       {/* Search Header Input bar */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-surface-secondary/40">
         <Search className="w-5 h-5 text-foreground/45 shrink-0" />
@@ -312,6 +315,7 @@ export function AuroraCommandPalette({
           })()
         )}
       </div>
-    </Modal>
+      </div>
+    </div>
   );
 }

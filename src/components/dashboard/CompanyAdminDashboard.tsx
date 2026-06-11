@@ -100,7 +100,7 @@ function Sparkline({ points, color, height = 40, width = 120 }: { points: number
 // ─── KPI Card ───────────────────────────────────────────────────────────────
 function KpiCard({ label, value, sub, delta, icon: Icon, color, history }: {
   label: string; value: string; sub?: string; delta?: number;
-  icon: React.ElementType; color: string; history: number[];
+  icon: any; color: string; history: number[];
 }) {
   const isUp = (delta ?? 0) >= 0;
   return (
@@ -529,6 +529,7 @@ export default function CompanyAdminDashboard() {
   const activeMembers = useMemo(() => members.filter(m => !m.is_blocked && (m.status === "ACTIVE" || m.status === "active") && m.onboarding_step === 6).length, [members]);
   const withoutOnboardingMembers = useMemo(() => members.filter(m => !m.is_blocked && (!m.onboarding_step || m.onboarding_step < 6)).length, [members]);
   const blockedMembers = useMemo(() => members.filter(m => !!m.is_blocked).length, [members]);
+  const inactiveMembers = useMemo(() => totalMembers - activeMembers - blockedMembers, [totalMembers, activeMembers, blockedMembers]);
   const tvl = useMemo(() => members.reduce((s, m) => s + Number(m.main_balance || 0) + Number(m.earning_balance || 0), 0), [members]);
 
   const commTotals = useMemo(() => commission?.totals || [], [commission]);

@@ -45,7 +45,7 @@ export function AnimatedContainer({
       initial="hidden"
       animate="visible"
       exit="hidden"
-      variants={variants[animation]}
+      variants={variants[animation] as any}
       className={className}
       {...props}
     >

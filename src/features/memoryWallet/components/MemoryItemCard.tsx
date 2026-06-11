@@ -99,7 +99,7 @@ export const MemoryItemCard: React.FC<Props> = ({ item, onClick, onEdit, onShare
       />
 
       {/* Media Content */}
-      <div className="w-full h-full relative" style={{ translateZ: "20px" }}>
+      <div className="w-full h-full relative" style={{ transform: "translateZ(20px)" }}>
         {(item.memory_type === 'photo' || item.memory_type === 'video') ? (
           <AppImage
             src={item.thumbnail_url || item.url || ''}
@@ -118,13 +118,13 @@ export const MemoryItemCard: React.FC<Props> = ({ item, onClick, onEdit, onShare
 
       {/* Video Indicator */}
       {item.memory_type === 'video' && (
-        <div className="absolute top-3 right-3 p-1.5 bg-black/50 backdrop-blur-sm rounded-full" style={{ translateZ: "30px" }}>
+        <div className="absolute top-3 right-3 p-1.5 bg-black/50 backdrop-blur-sm rounded-full" style={{ transform: "translateZ(30px)" }}>
           <Play className="w-4 h-4 text-white fill-white" />
         </div>
       )}
 
       {/* Top Action Bar (Always visible on mobile, hover on desktop) */}
-      <div className="absolute top-0 left-0 w-full p-3 flex justify-between items-start opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-b from-black/60 to-transparent z-30 pointer-events-auto" style={{ translateZ: "30px" }}>
+      <div className="absolute top-0 left-0 w-full p-3 flex justify-between items-start opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-b from-black/60 to-transparent z-30 pointer-events-auto" style={{ transform: "translateZ(30px)" }}>
         <button 
           onClick={(e) => { e.stopPropagation(); setIsFav(!isFav); onFavorite?.(item); }}
           className="p-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"

@@ -8,21 +8,28 @@ export interface BentoGridProps extends HTMLAttributes<HTMLDivElement> {
 
 export const BentoGrid = forwardRef<HTMLDivElement, BentoGridProps>(
   ({ className, stagger = true, children, ...props }, ref) => {
-    const Component = stagger ? AnimatedContainer : "div";
-    const componentProps = stagger ? { animation: "stagger" as const } : {};
-    
+    const classes = cn(
+      "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-[minmax(180px,auto)]",
+      className
+    );
+
+    if (stagger) {
+      return (
+        <AnimatedContainer
+          ref={ref as any}
+          className={classes}
+          animation="stagger"
+          {...(props as any)}
+        >
+          {children}
+        </AnimatedContainer>
+      );
+    }
+
     return (
-      <Component
-        ref={ref as any}
-        className={cn(
-          "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-[minmax(180px,auto)]",
-          className
-        )}
-        {...componentProps}
-        {...props}
-      >
+      <div ref={ref} className={classes} {...props}>
         {children}
-      </Component>
+      </div>
     );
   }
 );

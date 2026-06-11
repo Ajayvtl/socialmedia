@@ -4,8 +4,7 @@ import { ButtonHTMLAttributes, forwardRef } from "react";
 import { motion, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-type ButtonBaseProps = ButtonHTMLAttributes<HTMLButtonElement>;
-export interface GlowButtonProps extends Omit<HTMLMotionProps<"button">, keyof ButtonBaseProps>, ButtonBaseProps {
+export interface GlowButtonProps extends HTMLMotionProps<"button"> {
   variant?: "primary" | "secondary" | "accent" | "ghost";
   size?: "sm" | "md" | "lg";
 }
@@ -36,7 +35,7 @@ export const GlowButton = forwardRef<HTMLButtonElement, GlowButtonProps>(
         className={cn(baseStyles, variants[variant], sizes[size], className)}
         {...props}
       >
-        <span className="relative z-10 flex items-center gap-2">{children}</span>
+        <span className="relative z-10 flex items-center gap-2">{children as React.ReactNode}</span>
       </motion.button>
     );
   }

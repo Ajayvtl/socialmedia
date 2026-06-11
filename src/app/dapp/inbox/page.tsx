@@ -6,6 +6,7 @@ import { Send, Search, Info, Image as ImageIcon, Smile, MoreVertical, Loader2, A
 import { io, Socket } from "socket.io-client";
 import api, { getMediaUrl } from "@/lib/api";
 import toast from "react-hot-toast";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 
 export default function InboxPage() {
   const [activeChat, setActiveChat] = useState<any>(null);
@@ -21,6 +22,7 @@ export default function InboxPage() {
   const [msgMenuOpen, setMsgMenuOpen] = useState<number | null>(null);
   const [msgPrivacy, setMsgPrivacy] = useState<'everyone' | 'contacts'>('everyone');
   const [privacyMenuOpen, setPrivacyMenuOpen] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -431,7 +433,16 @@ export default function InboxPage() {
               </div>
 
               {/* Input Area */}
-              <div className="p-3 md:p-4 bg-surface/80 border-t border-border/50 backdrop-blur-xl shrink-0">
+              <div className="p-3 md:p-4 bg-surface/80 border-t border-border/50 backdrop-blur-xl shrink-0 relative">
+                {showEmojiPicker && (
+                  <div className="absolute bottom-full right-4 mb-2 z-50 shadow-2xl rounded-2xl overflow-hidden">
+                    <EmojiPicker 
+                      theme={Theme.DARK}
+                      onEmojiClick={(emojiData) => setInputValue(prev => prev + emojiData.emoji)}
+                      autoFocusSearch={false}
+                    />
+                  </div>
+                )}
                 <div className="flex items-center gap-2 bg-surface-secondary border border-border/50 rounded-full px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all shadow-inner relative">
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" onChange={handleFileUpload} />
                   <button onClick={() => fileInputRef.current?.click()} className="text-foreground/50 hover:text-primary transition-colors p-1" disabled={isUploading}>
@@ -442,12 +453,25 @@ export default function InboxPage() {
                     placeholder="Message..." 
                     value={inputValue}
                     onChange={e => setInputValue(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                         sendMessage();
+                         setShowEmojiPicker(false);
+                      }
+                    }}
                     className="flex-1 bg-transparent border-none focus:outline-none text-[15px] text-foreground placeholder:text-foreground/40 py-1"
                   />
-                  <button className="text-foreground/50 hover:text-[#FACC15] transition-colors p-1 md:block hidden"><Smile className="w-5 h-5"/></button>
                   <button 
-                    onClick={() => sendMessage()}
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    className={`text-foreground/50 hover:text-[#FACC15] transition-colors p-1 md:block hidden ${showEmojiPicker ? 'text-[#FACC15]' : ''}`}
+                  >
+                    <Smile className="w-5 h-5"/>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      sendMessage();
+                      setShowEmojiPicker(false);
+                    }}
                     disabled={!inputValue.trim() && !isUploading}
                     className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 disabled:opacity-50 disabled:scale-95 hover:opacity-90 hover:scale-105 active:scale-95 transition-all shadow-md"
                   >

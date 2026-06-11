@@ -192,8 +192,6 @@ export default function FamilyGraphView() {
         </div>
 
       </div>
-
-      <LivingCursor />
     </div>
   );
 }

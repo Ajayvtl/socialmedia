@@ -7,6 +7,7 @@ import { SettingsProvider } from "@/context/SettingsContext";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { Toaster } from "react-hot-toast";
 import AppLayout from "@/components/AppLayout";
+import { LivingCursor } from "@/components/ui/LivingCursor";
 
 export default function AppProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -27,8 +28,9 @@ export default function AppProviders({ children }: { children: ReactNode }) {
       <ThemeProvider>
         <AuthProvider>
           <SettingsProvider>
-            <Toaster position="top-right" />
-            <AppLayout>{children}</AppLayout>
+              <LivingCursor />
+              <Toaster position="top-right" />
+              <AppLayout>{children}</AppLayout>
           </SettingsProvider>
         </AuthProvider>
       </ThemeProvider>

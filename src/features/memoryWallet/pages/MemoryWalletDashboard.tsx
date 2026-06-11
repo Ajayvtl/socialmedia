@@ -402,8 +402,6 @@ const MemoryWalletDashboardContent = () => {
       >
         <Plus className="w-6 h-6" />
       </button>
-
-      <LivingCursor />
     </div>
   );
 };

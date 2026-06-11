@@ -227,7 +227,6 @@ const MemoryCircleViewContent = () => {
   return (
     <PageContainer>
       <LivingBackground theme={circle?.circle_type === 'family' ? 'ocean' : 'memory'} intensity="subtle" />
-      <LivingCursor />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pt-4">
         <div className="flex items-center gap-3 md:gap-4">

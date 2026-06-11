@@ -13,6 +13,7 @@ import { PageSection } from "@/components/ui/PageSection";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { GlowButton } from "@/components/ui/GlowButton";
 import { AppImage } from "@/components/ui/AppImage";
+import { BentoGrid, BentoItem } from "@/components/ui/BentoGrid";
 
 type DiscoverPost = {
   id: number;
@@ -336,39 +337,65 @@ export default function SearchDiscoveryPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <BentoGrid stagger={true} className="auto-rows-[minmax(250px,300px)]">
                 {filteredPosts.length === 0 ? (
                   <div className="md:col-span-2 xl:col-span-3 text-sm text-foreground/50">No posts matched your search.</div>
-                ) : filteredPosts.map((post) => (
-                  <div key={post.id} className="rounded-2xl border border-border bg-background/60 overflow-hidden cursor-pointer hover:border-primary/40 transition">
-                    {post.media_url ? (
-                      post.media_type?.startsWith("video") ? (
-                        <video src={getMediaUrl(post.media_url)} className="w-full h-40 object-cover bg-black" controls />
-                      ) : (
-                        <AppImage src={post.media_url} containerClassName="w-full h-40" className="w-full h-40 object-cover" />
-                      )
-                    ) : (
-                      <div className="w-full h-40 bg-surface-secondary flex items-center justify-center">
-                        <Play className="w-10 h-10 text-primary/60" />
+                ) : filteredPosts.map((post, idx) => {
+                  let colSpan: 1 | 2 | 3 | 4 = 1;
+                  let rowSpan: 1 | 2 = 1;
+
+                  if (idx === 0 || post.media_type?.startsWith("video")) {
+                    colSpan = 2;
+                    rowSpan = 2;
+                  } else if (idx % 5 === 0) {
+                    colSpan = 2;
+                  } else if (idx % 4 === 0) {
+                    rowSpan = 2;
+                  }
+
+                  return (
+                    <BentoItem 
+                      key={post.id} 
+                      colSpan={colSpan}
+                      rowSpan={rowSpan}
+                      className="group cursor-pointer hover:border-primary/40 transition-all duration-300 overflow-hidden flex flex-col"
+                      onClick={() => router.push(`/dapp/post/${post.id}`)}
+                    >
+                      <div className="relative w-full flex-1 overflow-hidden">
+                        {post.media_url ? (
+                          post.media_type?.startsWith("video") ? (
+                            <video src={getMediaUrl(post.media_url)} className="w-full h-full object-cover bg-black group-hover:scale-105 transition-transform duration-500" loop muted playsInline />
+                          ) : (
+                            <AppImage src={post.media_url} containerClassName="w-full h-full" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          )
+                        ) : (
+                          <div className="w-full h-full bg-surface-secondary flex items-center justify-center group-hover:bg-surface-secondary/80 transition-colors">
+                            <Play className="w-10 h-10 text-primary/60 group-hover:scale-110 transition-transform" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </div>
-                    )}
-                    <div className="p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                          {(post.display_name || "U").charAt(0).toUpperCase()}
+                      
+                      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary border border-primary/30">
+                            {(post.display_name || "U").charAt(0).toUpperCase()}
+                          </div>
+                          <p className="text-xs font-bold text-white drop-shadow-md truncate">{post.display_name || "Member"}</p>
                         </div>
-                        <p className="text-sm font-semibold text-foreground truncate">{post.display_name || "Member"}</p>
+                        {post.content && (
+                          <p className="text-xs text-white/90 line-clamp-2 drop-shadow-md mb-2">{post.content}</p>
+                        )}
+                        <div className="flex items-center gap-3 text-[10px] font-medium text-white/70">
+                          <span className="flex items-center gap-1"><span className="text-pink-500">♥</span> {post.likes_count || 0}</span>
+                          <span className="flex items-center gap-1">💬 {post.comments_count || 0}</span>
+                          <span className="flex items-center gap-1">↗ {post.shares_count || 0}</span>
+                        </div>
                       </div>
-                      <p className="text-sm text-foreground/65 line-clamp-3">{post.content || "No caption"}</p>
-                      <div className="flex items-center gap-3 mt-3 text-xs text-foreground/50">
-                        <span>♥ {post.likes_count || 0}</span>
-                        <span>💬 {post.comments_count || 0}</span>
-                        <span>↗ {post.shares_count || 0}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    </BentoItem>
+                  );
+                })}
+              </BentoGrid>
             </GlassPanel>
           )}
         </div>

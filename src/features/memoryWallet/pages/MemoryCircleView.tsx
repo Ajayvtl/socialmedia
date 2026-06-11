@@ -701,7 +701,10 @@ const MemoryCircleViewContent = () => {
           }}
           photos={items.filter(i => i.memory_type === 'photo').map(i => (i as any).original_url || i.url).slice(0, 5)}
           onShare={() => {
-            alert('A unique token has been generated: mem.aurora.app/GT26ABX. Copied to clipboard!');
+            const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://mem.aurora.app';
+            const shareUrl = `${baseUrl}/dapp/memory-wallet/circles/${circle?.id || '2'}?invite=GT26ABX`;
+            navigator.clipboard.writeText(shareUrl);
+            alert(`A unique token has been generated: ${shareUrl}. Copied to clipboard!`);
             setIsShareCardOpen(false);
           }}
           onClose={() => setIsShareCardOpen(false)}

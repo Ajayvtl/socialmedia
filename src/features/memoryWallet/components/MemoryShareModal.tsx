@@ -13,7 +13,8 @@ export const MemoryShareModal: React.FC<MemoryShareModalProps> = ({ item, onClos
 
   if (!item) return null;
 
-  const shareUrl = `https://mem.aurora.app/${String(item.id).substring(0,8) || 'GT26ABX'}`;
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://mem.aurora.app';
+  const shareUrl = `${baseUrl}/dapp/memory-wallet/shared/${String(item.id).substring(0,8) || 'GT26ABX'}`;
   
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);

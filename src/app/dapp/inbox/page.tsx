@@ -463,7 +463,7 @@ export default function InboxPage() {
                   />
                   <button 
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className={`text-foreground/50 hover:text-[#FACC15] transition-colors p-1 md:block hidden ${showEmojiPicker ? 'text-[#FACC15]' : ''}`}
+                    className={`text-foreground/50 hover:text-[#FACC15] transition-colors p-1 ${showEmojiPicker ? 'text-[#FACC15]' : ''}`}
                   >
                     <Smile className="w-5 h-5"/>
                   </button>

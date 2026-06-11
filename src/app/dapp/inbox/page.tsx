@@ -10,7 +10,7 @@ import EmojiPicker, { Theme } from "emoji-picker-react";
 import { GiphyFetch } from '@giphy/js-fetch-api';
 import { Grid } from '@giphy/react-components';
 
-const gf = new GiphyFetch(process.env.NEXT_PUBLIC_GIPHY_API_KEY || 'glSpxrXW11B6tS9ZtJ6Vz7j2jJ4R4K2V');
+const gf = new GiphyFetch(process.env.NEXT_PUBLIC_GIPHY_API_KEY || 'UUz4xjDhZRZXP86KctgPA89X4r0XZJcC');
 
 export default function InboxPage() {
   const [activeChat, setActiveChat] = useState<any>(null);
@@ -167,7 +167,7 @@ export default function InboxPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, activeChat]);
 
-  const sendMessage = (mediaUrl = null, mediaType = null) => {
+  const sendMessage = (mediaUrl: string | null = null, mediaType: string | null = null) => {
     if ((!inputValue.trim() && !mediaUrl) || !activeChat || !socket) return;
     
     socket.emit("send_message", {

@@ -378,8 +378,12 @@ export default function SearchDiscoveryPage() {
                       
                       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent">
                         <div className="flex items-center gap-2 mb-1.5">
-                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary border border-primary/30">
-                            {(post.display_name || "U").charAt(0).toUpperCase()}
+                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary border border-primary/30 overflow-hidden">
+                            {post.avatar_url ? (
+                                <AppImage src={post.avatar_url} containerClassName="w-full h-full" className="w-full h-full object-cover" />
+                            ) : (
+                                (post.display_name || "U").charAt(0).toUpperCase()
+                            )}
                           </div>
                           <p className="text-xs font-bold text-white drop-shadow-md truncate">{post.display_name || "Member"}</p>
                         </div>

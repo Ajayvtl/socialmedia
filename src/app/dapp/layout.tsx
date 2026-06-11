@@ -7,7 +7,8 @@ import Link from "next/link";
 import api, { getMediaUrl } from "@/lib/api";
 import { 
   Home, Compass, Users, Heart, Calendar, MessageCircle, Sparkles, 
-  Wallet, Trophy, Bookmark, MoreHorizontal, Loader2, Plus, Search, LogOut, Briefcase, GitMerge, Archive
+  Wallet, Trophy, Bookmark, MoreHorizontal, Loader2, Plus, Search, LogOut, Briefcase, GitMerge, Archive,
+  Menu, X
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -17,6 +18,11 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   const [socialProfile, setSocialProfile] = useState<any>(null);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMobileNavOpen(false);
+  }, [pathname]);
 
   const isPublicDappPage = pathname === "/dapp/login" || pathname === "/dapp";
   const hideNav = isPublicDappPage || pathname === "/dapp/onboarding";
@@ -80,17 +86,43 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
         <div className="absolute -bottom-[10%] left-[10%] w-[150vw] h-[150vw] md:w-[50vw] md:h-[50vw] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,77,141,0.12)_0%,transparent_60%)] blur-3xl"></div>
       </div>
 
-      {/* DESKTOP SIDEBAR (Layer 3) */}
+      {/* MOBILE OVERLAY */}
+      {showNav && isMobileNavOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-40 xl:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setIsMobileNavOpen(false)}
+        />
+      )}
+
+      {/* FLOATING MOBILE MENU BUTTON */}
       {showNav && (
-        <aside className="fixed inset-y-0 left-0 z-40 hidden w-[280px] xl:flex xl:flex-col overflow-y-auto hide-scrollbar bg-white/[0.02] border-r border-white/[0.05] backdrop-blur-[24px]">
+        <button 
+          onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+          className={`xl:hidden fixed z-50 bottom-[90px] right-4 w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-[0_0_20px_rgba(0,229,255,0.2)] border border-white/10 overflow-hidden group`}
+        >
+          <div className="absolute inset-0 bg-gradient-to-tr from-[#8B5CF6]/80 to-[#00E5FF]/80 backdrop-blur-md transition-opacity group-hover:opacity-100 opacity-90" />
+          <div className="relative z-10">
+            {isMobileNavOpen ? <X className="w-7 h-7 text-white" /> : <Menu className="w-7 h-7 text-white" />}
+          </div>
+        </button>
+      )}
+
+      {/* SIDEBAR (Desktop Fixed, Mobile Collapsible) */}
+      {showNav && (
+        <aside className={`fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col overflow-y-auto hide-scrollbar bg-[#050816]/95 xl:bg-white/[0.02] border-r border-white/[0.05] backdrop-blur-[24px] transition-transform duration-300 xl:translate-x-0 ${isMobileNavOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           
-          {/* Logo */}
-          <Link href="/dapp/feed" className="flex items-center gap-3 px-6 py-8">
-             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#00E5FF] via-[#8B5CF6] to-[#FF4D8D] flex items-center justify-center font-black text-xl shadow-[0_0_15px_rgba(139,92,246,0.5)]">
-                A
-             </div>
-             <span className="text-2xl font-bold tracking-wider">AURORA</span>
-          </Link>
+          {/* Logo & Close */}
+          <div className="flex items-center justify-between px-6 py-8">
+            <Link href="/dapp/feed" className="flex items-center gap-3">
+               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#00E5FF] via-[#8B5CF6] to-[#FF4D8D] flex items-center justify-center font-black text-xl shadow-[0_0_15px_rgba(139,92,246,0.5)]">
+                  A
+               </div>
+               <span className="text-2xl font-bold tracking-wider">AURORA</span>
+            </Link>
+            <button className="xl:hidden text-white/60 hover:text-white transition-colors" onClick={() => setIsMobileNavOpen(false)}>
+              <X className="w-6 h-6" />
+            </button>
+          </div>
 
           {/* Main Navigation */}
           <nav className="flex-1 px-4 space-y-1 pb-4">

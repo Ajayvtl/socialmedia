@@ -4,7 +4,7 @@ import { useState } from "react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { GlowButton } from "@/components/ui/GlowButton";
 import { AnimatedContainer } from "@/components/ui/AnimatedContainer";
-import { Video, Music, Scissors, Sparkles, UploadCloud, Play, Pause, Image as ImageIcon, Volume2 } from "lucide-react";
+import { Video, Music, Scissors, Sparkles, UploadCloud, Play, Pause, Image as ImageIcon, Volume2, Search } from "lucide-react";
 
 export default function MediaStudioPage() {
   const [activeTab, setActiveTab] = useState<"EDIT" | "FILTERS" | "AUDIO">("EDIT");

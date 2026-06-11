@@ -36,7 +36,7 @@ export default function SystemVariablesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [cRes, sRes, ciRes, iRes, genRes] = await Promise.all([
+      const [cRes, sRes, ciRes, iRes, genRes, relRes] = await Promise.all([
         api.get("/settings/countries").catch(() => ({ data: { data: [] } })),
         api.get("/settings/states").catch(() => ({ data: { data: [] } })),
         api.get("/settings/cities").catch(() => ({ data: { data: [] } })),

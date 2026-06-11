@@ -2,11 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-import { Send, Search, Info, Image as ImageIcon, Smile, MoreVertical, Loader2, ArrowLeft, Check, CheckCheck, Settings } from "lucide-react";
+import { Send, Search, Info, Image as ImageIcon, Smile, MoreVertical, Loader2, ArrowLeft, Check, CheckCheck, Settings, FileBox } from "lucide-react";
 import { io, Socket } from "socket.io-client";
 import api, { getMediaUrl } from "@/lib/api";
 import toast from "react-hot-toast";
 import EmojiPicker, { Theme } from "emoji-picker-react";
+import { GiphyFetch } from '@giphy/js-fetch-api';
+import { Grid } from '@giphy/react-components';
+
+const gf = new GiphyFetch(process.env.NEXT_PUBLIC_GIPHY_API_KEY || 'sXpGFDGZs0Dv1mmz9DmMQYy9yS7Xk44G');
 
 export default function InboxPage() {
   const [activeChat, setActiveChat] = useState<any>(null);
@@ -23,6 +27,8 @@ export default function InboxPage() {
   const [msgPrivacy, setMsgPrivacy] = useState<'everyone' | 'contacts'>('everyone');
   const [privacyMenuOpen, setPrivacyMenuOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [gifSearchTerm, setGifSearchTerm] = useState("");
 
   useEffect(() => {
     const init = async () => {
@@ -330,7 +336,13 @@ export default function InboxPage() {
               </div>
 
               {/* Messages Space */}
-              <div className="flex-1 p-4 md:p-6 overflow-y-auto flex flex-col gap-4 custom-scrollbar bg-gradient-to-b from-transparent to-surface/30">
+              <div 
+                className="flex-1 p-4 md:p-6 overflow-y-auto flex flex-col gap-4 custom-scrollbar bg-gradient-to-b from-transparent to-surface/30"
+                onClick={() => {
+                  setShowEmojiPicker(false);
+                  setShowGifPicker(false);
+                }}
+              >
                 {activeMessages.length === 0 ? (
                    <div className="m-auto text-center text-foreground/40 text-sm bg-surface p-4 rounded-2xl border border-border/50 shadow-sm">Say hi to {activeChat.name}!</div>
                 ) : (
@@ -435,7 +447,13 @@ export default function InboxPage() {
               {/* Input Area */}
               <div className="p-3 md:p-4 bg-surface/80 border-t border-border/50 backdrop-blur-xl shrink-0 relative">
                 {showEmojiPicker && (
-                  <div className="absolute bottom-full right-4 mb-2 z-50 shadow-2xl rounded-2xl overflow-hidden">
+                  <div className="absolute bottom-full right-4 mb-2 z-50 shadow-2xl rounded-2xl overflow-hidden bg-surface">
+                    <div className="bg-surface-secondary p-2 flex justify-between items-center border-b border-border/50">
+                       <span className="text-xs font-bold text-foreground/70 uppercase tracking-wider ml-2">Emojis</span>
+                       <button onClick={() => setShowEmojiPicker(false)} className="text-foreground/50 hover:text-foreground p-1 bg-background rounded-full transition-colors">
+                          <Check className="w-4 h-4" />
+                       </button>
+                    </div>
                     <EmojiPicker 
                       theme={Theme.DARK}
                       onEmojiClick={(emojiData) => setInputValue(prev => prev + emojiData.emoji)}
@@ -443,27 +461,74 @@ export default function InboxPage() {
                     />
                   </div>
                 )}
-                <div className="flex items-center gap-2 bg-surface-secondary border border-border/50 rounded-full px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all shadow-inner relative">
+
+                {showGifPicker && (
+                  <div className="absolute bottom-full right-4 mb-2 z-50 shadow-2xl rounded-2xl overflow-hidden bg-surface border border-border/50 flex flex-col" style={{ width: 300, height: 400 }}>
+                    <div className="p-2 border-b border-border/50 flex justify-between items-center bg-surface-secondary">
+                      <input 
+                        type="text" 
+                        placeholder="Search GIFs..." 
+                        value={gifSearchTerm}
+                        onChange={(e) => setGifSearchTerm(e.target.value)}
+                        className="w-full bg-background border border-border/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-primary transition-colors text-foreground placeholder:text-foreground/50 mr-2"
+                      />
+                      <button onClick={() => setShowGifPicker(false)} className="text-foreground/50 hover:text-foreground p-1 shrink-0">
+                        <Check className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-1">
+                      <Grid
+                        width={290}
+                        columns={2}
+                        fetchGifs={fetchGifs}
+                        key={gifSearchTerm}
+                        onGifClick={(gif, e) => {
+                          e.preventDefault();
+                          sendMessage(gif.images.original.url, 'gif');
+                          setShowGifPicker(false);
+                        }}
+                        noLink
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-end gap-2 bg-surface-secondary border border-border/50 rounded-[24px] px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all shadow-inner relative">
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" onChange={handleFileUpload} />
-                  <button onClick={() => fileInputRef.current?.click()} className="text-foreground/50 hover:text-primary transition-colors p-1" disabled={isUploading}>
+                  <button onClick={() => fileInputRef.current?.click()} className="text-foreground/50 hover:text-primary transition-colors p-2 mb-1 shrink-0" disabled={isUploading}>
                     {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5"/>}
                   </button>
-                  <input 
-                    type="text" 
+                  <textarea 
                     placeholder="Message..." 
                     value={inputValue}
                     onChange={e => setInputValue(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                         sendMessage();
-                         setShowEmojiPicker(false);
-                      }
+                    onFocus={() => {
+                      setShowEmojiPicker(false);
+                      setShowGifPicker(false);
                     }}
-                    className="flex-1 bg-transparent border-none focus:outline-none text-[15px] text-foreground placeholder:text-foreground/40 py-1"
+                    className="flex-1 bg-transparent border-none focus:outline-none text-[15px] text-foreground placeholder:text-foreground/40 py-2.5 resize-none min-h-[44px] max-h-[120px] custom-scrollbar"
+                    rows={1}
+                    onInput={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.height = 'auto';
+                      target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
+                    }}
                   />
                   <button 
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className={`text-foreground/50 hover:text-[#FACC15] transition-colors p-1 ${showEmojiPicker ? 'text-[#FACC15]' : ''}`}
+                    onClick={() => {
+                      setShowGifPicker(!showGifPicker);
+                      setShowEmojiPicker(false);
+                    }}
+                    className={`text-foreground/50 hover:text-[#00E5FF] transition-colors p-2 mb-1 shrink-0 ${showGifPicker ? 'text-[#00E5FF]' : ''}`}
+                  >
+                    <FileBox className="w-5 h-5"/>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setShowEmojiPicker(!showEmojiPicker);
+                      setShowGifPicker(false);
+                    }}
+                    className={`text-foreground/50 hover:text-[#FACC15] transition-colors p-2 mb-1 shrink-0 ${showEmojiPicker ? 'text-[#FACC15]' : ''}`}
                   >
                     <Smile className="w-5 h-5"/>
                   </button>
@@ -471,9 +536,15 @@ export default function InboxPage() {
                     onClick={() => {
                       sendMessage();
                       setShowEmojiPicker(false);
+                      setShowGifPicker(false);
+                      // Reset textarea height
+                      setTimeout(() => {
+                        const ta = document.querySelector('textarea');
+                        if (ta) ta.style.height = 'auto';
+                      }, 0);
                     }}
                     disabled={!inputValue.trim() && !isUploading}
-                    className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 disabled:opacity-50 disabled:scale-95 hover:opacity-90 hover:scale-105 active:scale-95 transition-all shadow-md"
+                    className="w-10 h-10 mb-1 rounded-full bg-primary flex items-center justify-center shrink-0 disabled:opacity-50 disabled:scale-95 hover:opacity-90 hover:scale-105 active:scale-95 transition-all shadow-md"
                   >
                     <Send className="w-4 h-4 ml-0.5 text-primary-foreground" />
                   </button>

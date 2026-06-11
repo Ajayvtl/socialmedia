@@ -469,18 +469,35 @@ export default function InboxPage() {
                 )}
 
                 {showGifPicker && (
-                  <div className="absolute bottom-full right-4 mb-2 z-50 shadow-2xl rounded-2xl overflow-hidden bg-surface border border-border/50 flex flex-col" style={{ width: 300, height: 400 }}>
-                    <div className="p-2 border-b border-border/50 flex justify-between items-center bg-surface-secondary">
-                      <input 
-                        type="text" 
-                        placeholder="Search GIFs..." 
-                        value={gifSearchTerm}
-                        onChange={(e) => setGifSearchTerm(e.target.value)}
-                        className="w-full bg-background border border-border/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-primary transition-colors text-foreground placeholder:text-foreground/50 mr-2"
-                      />
-                      <button onClick={() => setShowGifPicker(false)} className="text-foreground/50 hover:text-foreground p-1 shrink-0">
-                        <Check className="w-4 h-4" />
-                      </button>
+                  <div className="absolute bottom-full right-4 mb-2 z-50 shadow-2xl rounded-2xl overflow-hidden bg-surface border border-border/50 flex flex-col" style={{ width: 300, height: 420 }}>
+                    <div className="p-2 border-b border-border/50 flex flex-col bg-surface-secondary gap-2">
+                      <div className="flex justify-between items-center">
+                        <input 
+                          type="text" 
+                          placeholder="Search GIFs..." 
+                          value={gifSearchTerm}
+                          onChange={(e) => setGifSearchTerm(e.target.value)}
+                          className="w-full bg-background border border-border/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-primary transition-colors text-foreground placeholder:text-foreground/50 mr-2"
+                        />
+                        <button onClick={() => setShowGifPicker(false)} className="text-foreground/50 hover:text-foreground p-1 shrink-0">
+                          <Check className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+                        {["Trending", "Haha", "Sad", "Love", "Angry", "Surprise"].map(cat => (
+                          <button 
+                            key={cat} 
+                            onClick={() => setGifSearchTerm(cat === "Trending" ? "" : cat)}
+                            className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-colors border ${
+                              (cat === "Trending" && gifSearchTerm === "") || gifSearchTerm.toLowerCase() === cat.toLowerCase()
+                                ? "bg-primary text-primary-foreground border-primary" 
+                                : "bg-background text-foreground/70 border-border/50 hover:border-primary/50"
+                            }`}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-1">
                       <Grid
@@ -494,6 +511,7 @@ export default function InboxPage() {
                           setShowGifPicker(false);
                         }}
                         noLink
+                        hideAttribution
                       />
                     </div>
                   </div>

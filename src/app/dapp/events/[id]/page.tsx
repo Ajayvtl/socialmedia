@@ -39,7 +39,7 @@ export default function EventDetailPage() {
     try {
       await api.post(`/events/${eventId}/rsvp`, { status });
       toast.success(status === 'NOT_GOING' ? "RSVP Cancelled" : "RSVP Confirmed!");
-      setEvent(prev => ({ ...prev, myRsvp: status }));
+      setEvent((prev: any) => ({ ...prev, myRsvp: status }));
     } catch (err) {
       toast.error("Failed to update RSVP");
     } finally {

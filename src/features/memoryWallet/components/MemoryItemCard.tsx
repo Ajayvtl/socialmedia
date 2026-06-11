@@ -59,6 +59,10 @@ export const MemoryItemCard: React.FC<Props> = ({ item, onClick, onEdit, onShare
     y.set(0);
   };
 
+  // Generate a stable pseudorandom duration based on item id to avoid React hydration mismatches
+  const stableId = typeof item.id === 'number' ? item.id : String(item.id).charCodeAt(0);
+  const breathDuration = 4 + (stableId % 4); // Breathing cycle will be 4, 5, 6, or 7 seconds
+
   return (
     <motion.div 
       ref={ref}
@@ -70,13 +74,14 @@ export const MemoryItemCard: React.FC<Props> = ({ item, onClick, onEdit, onShare
         rotateY,
         transformStyle: "preserve-3d",
       }}
-      className="group relative aspect-square rounded-2xl overflow-hidden bg-[var(--color-surface)] border border-[var(--color-border)] md:cursor-none hover:border-[var(--color-primary)] transition-colors shadow-lg hover:shadow-2xl"
+      className="group relative h-full w-full rounded-2xl overflow-hidden bg-[var(--color-surface)] border border-[var(--color-border)] md:cursor-none hover:border-[#8B5CF6] transition-colors shadow-lg hover:shadow-2xl"
       data-cursor={item.memory_type === 'video' ? 'video' : 'photo'}
       data-cursor-label={item.memory_type === 'video' ? 'Play Video' : 'View Memory'}
       animate={{
+        scale: [1, 1.015, 1],
         boxShadow: [
           "0px 4px 20px rgba(0, 0, 0, 0.1)",
-          "0px 4px 25px rgba(0, 229, 255, 0.15)",
+          "0px 4px 25px rgba(139, 92, 246, 0.15)",
           "0px 4px 20px rgba(0, 0, 0, 0.1)"
         ]
       }}
@@ -84,9 +89,10 @@ export const MemoryItemCard: React.FC<Props> = ({ item, onClick, onEdit, onShare
         type: "spring", 
         stiffness: 300, 
         damping: 25,
-        boxShadow: { duration: 4 + Math.random() * 2, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }
+        boxShadow: { duration: breathDuration, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" },
+        scale: { duration: breathDuration, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }
       }}
-      whileHover={{ scale: 1.05, zIndex: 10, transition: { duration: 0.2 } }}
+      whileHover={{ scale: 1.04, zIndex: 10, transition: { duration: 0.3 } }}
     >
       {/* Glare Effect */}
       <motion.div 

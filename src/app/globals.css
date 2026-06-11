@@ -1,0 +1,212 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  
+  /* Brand & Action Colors */
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  
+  /* Semantic Status Colors */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  
+  /* Surfaces & Layout */
+  --color-surface: var(--surface);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-glass: var(--surface-glass);
+  --color-border: var(--border-color);
+  
+  /* Shadows */
+  --shadow-soft: var(--shadow-soft);
+  --shadow-glow: var(--shadow-glow);
+  --shadow-floating: var(--shadow-floating);
+  
+  /* Radii */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+}
+
+:root {
+  /* Global "Neon Orbit" Dark Theme (Default) */
+  --background: #060b14;
+  --foreground: #f5f5f5;
+  --primary: #5bbcff;
+  --secondary: #a066ff;
+  --accent: #ff007f;
+  
+  --success: #0ecb81;
+  --warning: #facc15;
+  --danger: #ff4d8d;
+  
+  --surface: #161a20;
+  --surface-secondary: #111418;
+  --surface-glass: rgba(22, 26, 32, 0.7);
+  --border-color: #2b3139;
+  
+  --shadow-soft: 0 4px 20px rgba(0,0,0,0.2);
+  --shadow-glow: 0 0 15px rgba(91,188,255,0.4);
+  --shadow-floating: 0 10px 30px rgba(0,0,0,0.5);
+  
+  --radius-sm: 0.5rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 2rem;
+  
+  --motion-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme='cyberpunk'] {
+  --background: #0d0221;
+  --foreground: #00ffcc;
+  --primary: #ff007f;
+  --secondary: #00e5ff;
+  --accent: #ffea00;
+  --success: #00ffcc;
+  --warning: #ffea00;
+  --danger: #ff007f;
+  --surface: #1a0b2e;
+  --surface-secondary: #10051d;
+  --surface-glass: rgba(26, 11, 46, 0.7);
+  --border-color: #3b1c5a;
+  --shadow-glow: 0 0 20px rgba(255,0,127,0.5);
+}
+
+[data-theme='golden-hour'] {
+  --background: #1f140f;
+  --foreground: #fdf5e6;
+  --primary: #ff8c42;
+  --secondary: #ff3c38;
+  --accent: #f9c22e;
+  --success: #0ecb81;
+  --warning: #f9c22e;
+  --danger: #ff3c38;
+  --surface: #2e1f18;
+  --surface-secondary: #221610;
+  --surface-glass: rgba(46, 31, 24, 0.7);
+  --border-color: #4a3429;
+  --shadow-glow: 0 0 15px rgba(255,140,66,0.3);
+}
+
+[data-theme='aurora'] {
+  --background: #081c15;
+  --foreground: #d8f3dc;
+  --primary: #40916c;
+  --secondary: #52b788;
+  --accent: #95d5b2;
+  --success: #52b788;
+  --warning: #facc15;
+  --danger: #d90429;
+  --surface: #1b4332;
+  --surface-secondary: #0f2c20;
+  --surface-glass: rgba(27, 67, 50, 0.7);
+  --border-color: #2d6a4f;
+  --shadow-glow: 0 0 15px rgba(64,145,108,0.3);
+}
+
+[data-theme='midnight'] {
+  --background: #000000;
+  --foreground: #e0e0e0;
+  --primary: #333333;
+  --secondary: #555555;
+  --accent: #ffffff;
+  --success: #ffffff;
+  --warning: #cccccc;
+  --danger: #888888;
+  --surface: #111111;
+  --surface-secondary: #0a0a0a;
+  --surface-glass: rgba(17, 17, 17, 0.8);
+  --border-color: #222222;
+  --shadow-glow: none;
+}
+
+[data-theme='accessibility'] {
+  --background: #000000;
+  --foreground: #ffffff;
+  --primary: #ffff00;
+  --secondary: #00ffff;
+  --accent: #ff00ff;
+  --success: #00ff00;
+  --warning: #ffff00;
+  --danger: #ff0000;
+  --surface: #000000;
+  --surface-secondary: #000000;
+  --surface-glass: #000000;
+  --border-color: #ffffff;
+  --shadow-soft: none;
+  --shadow-glow: none;
+  --shadow-floating: none;
+  --motion-fast: 0s;
+  --motion-normal: 0s;
+  --motion-slow: 0s;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  transition: background-color var(--motion-normal), color var(--motion-normal);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background-color: var(--primary); }
+
+main > div[class*="max-w-"], main > section[class*="max-w-"], main > div > div[class*="max-w-7xl"], main > div > div[class*="max-w-6xl"] { max-width: 100% !important; width: 100% !important; }
+main > div.p-4, main > div.p-6, main > div.p-8 { max-width: 100% !important; width: 100% !important; }
+main { overflow-x: hidden; }
+
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Accessibility Preferences Overrides */
+.reduced-motion * {
+  transition-property: none !important;
+  animation-duration: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0s !important;
+  scroll-behavior: auto !important;
+}
+
+.reduced-transparency {
+  --surface-glass: var(--surface) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.high-contrast {
+  --border-color: var(--foreground) !important;
+  outline: 1px solid var(--foreground) !important;
+}
+
+.font-scale-sm {
+  font-size: 0.875rem !important;
+}
+
+.font-scale-md {
+  font-size: 1rem !important;
+}
+
+.font-scale-lg {
+  font-size: 1.125rem !important;
+}
+
+.font-scale-xl {
+  font-size: 1.25rem !important;
+}

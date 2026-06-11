@@ -105,6 +105,7 @@ export default function FeedPage() {
   const [showNotifMenu, setShowNotifMenu] = useState(false);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const [storyVideoDuration, setStoryVideoDuration] = useState<number | null>(null);
+  const [actionedNotifs, setActionedNotifs] = useState<Record<number, 'accepted' | 'declined'>>({});
 
   useEffect(() => {
     setStoryVideoDuration(null);
@@ -316,19 +317,25 @@ export default function FeedPage() {
     } catch (err) { console.error('Failed to fetch pending requests', err); }
   };
 
-  const handleAcceptConnection = async (requesterId: number) => {
+  const handleAcceptConnection = async (requesterId: number, notifId?: number) => {
     try {
       await api.post(`/connections/accept/${requesterId}`);
       toast.success('Connection accepted!');
+      if (notifId) {
+        setActionedNotifs(prev => ({ ...prev, [notifId]: 'accepted' }));
+      }
       fetchPendingRequests();
       fetchConnections();
     } catch (err) { toast.error('Failed to accept'); }
   };
 
-  const handleRejectConnection = async (requesterId: number) => {
+  const handleRejectConnection = async (requesterId: number, notifId?: number) => {
     try {
       await api.delete(`/connections/${requesterId}`);
       toast.success('Request declined');
+      if (notifId) {
+        setActionedNotifs(prev => ({ ...prev, [notifId]: 'declined' }));
+      }
       fetchPendingRequests();
     } catch (err) { toast.error('Failed to decline'); }
   };
@@ -692,13 +699,15 @@ export default function FeedPage() {
                       <span className="text-xs text-[#00E5FF] cursor-pointer hover:underline" onClick={markNotifsRead}>Mark all read</span>
                     </div>
                     <div className="max-h-[400px] overflow-y-auto hide-scrollbar">
-                      {notifications.length === 0 ? (
+                      {notifications.filter((n: any) => !n.is_read || n.is_read === 0).length === 0 ? (
                         <div className="p-8 text-center text-white/40 text-sm flex flex-col items-center">
                           <Bell className="w-8 h-8 mb-2 opacity-50" />
                           <p>No new notifications</p>
                         </div>
                       ) : (
-                        notifications.map((notif: any) => {
+                        notifications
+                          .filter((notif: any) => !notif.is_read || notif.is_read === 0)
+                          .map((notif: any) => {
                           let metaObj: any = null;
                           if (notif.meta) {
                             try {
@@ -744,26 +753,34 @@ export default function FeedPage() {
 
                                   {isConnectionReq && metaObj && (
                                     <div className="flex gap-1.5 ml-2 mt-1 shrink-0">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleAcceptConnection(metaObj.senderId);
-                                        }}
-                                        className="w-7 h-7 bg-[#0ecb81]/20 hover:bg-[#0ecb81] text-[#0ecb81] hover:text-[#050816] rounded-full flex items-center justify-center transition-all border border-[#0ecb81]/30"
-                                        title="Accept"
-                                      >
-                                        <Check className="w-4 h-4" />
-                                      </button>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleRejectConnection(metaObj.senderId);
-                                        }}
-                                        className="w-7 h-7 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white rounded-full flex items-center justify-center transition-all border border-red-500/30"
-                                        title="Decline"
-                                      >
-                                        <X className="w-4 h-4" />
-                                      </button>
+                                      {actionedNotifs[notif.id] ? (
+                                        <span className={`text-[10px] px-2 py-1 rounded-full font-bold border ${actionedNotifs[notif.id] === 'accepted' ? 'text-[#0ecb81] border-[#0ecb81]/30 bg-[#0ecb81]/10' : 'text-red-400 border-red-500/30 bg-red-500/10'}`}>
+                                          {actionedNotifs[notif.id] === 'accepted' ? 'Accepted' : 'Declined'}
+                                        </span>
+                                      ) : (
+                                        <>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleAcceptConnection(metaObj.senderId, notif.id);
+                                            }}
+                                            className="w-7 h-7 bg-[#0ecb81]/20 hover:bg-[#0ecb81] text-[#0ecb81] hover:text-[#050816] rounded-full flex items-center justify-center transition-all border border-[#0ecb81]/30"
+                                            title="Accept"
+                                          >
+                                            <Check className="w-4 h-4" />
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleRejectConnection(metaObj.senderId, notif.id);
+                                            }}
+                                            className="w-7 h-7 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white rounded-full flex items-center justify-center transition-all border border-red-500/30"
+                                            title="Decline"
+                                          >
+                                            <X className="w-4 h-4" />
+                                          </button>
+                                        </>
+                                      )}
                                     </div>
                                   )}
                                 </div>

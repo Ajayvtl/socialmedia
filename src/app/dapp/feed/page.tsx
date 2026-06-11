@@ -776,10 +776,10 @@ export default function FeedPage() {
                   </div>
                 )}
               </div>
-              <button className="text-white/80 hover:text-white transition-colors relative">
+              <Link href="/dapp/inbox" className="text-white/80 hover:text-white transition-colors relative">
                 <MessageCircle className="w-6 h-6" />
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#00E5FF] rounded-full border-[2px] border-[#050816]"></span>
-              </button>
+              </Link>
             </div>
           </div>
 

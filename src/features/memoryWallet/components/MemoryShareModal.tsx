@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MemoryItem } from '../types/memoryWallet.types';
-import { X, Copy, Check, Twitter, Send, MessagesSquare, Users, Globe } from 'lucide-react';
+import { X, Copy, Check, Twitter, Send, MessagesSquare, Users, Globe, Loader2 } from 'lucide-react';
 import { AppImage } from '@/components/ui/AppImage';
+import api from '@/lib/api';
 
 interface MemoryShareModalProps {
   item: MemoryItem | null;
@@ -10,13 +11,28 @@ interface MemoryShareModalProps {
 
 export const MemoryShareModal: React.FC<MemoryShareModalProps> = ({ item, onClose }) => {
   const [isCopied, setIsCopied] = useState(false);
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (item) {
+      // If we already have a token locally attached (if we loaded it), use it, otherwise fetch
+      api.post(`/memory-wallet/items/${item.id}/share`)
+        .then(res => {
+          setShareToken(res.data?.data?.share_token);
+        })
+        .catch(err => console.error('Failed to generate share token', err))
+        .finally(() => setIsLoading(false));
+    }
+  }, [item]);
 
   if (!item) return null;
 
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://mem.aurora.app';
-  const shareUrl = `${baseUrl}/dapp/memory-wallet/shared/${String(item.id).substring(0,8) || 'GT26ABX'}`;
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://aurora.app';
+  const shareUrl = shareToken ? `${baseUrl}/s/${shareToken}` : 'Generating link...';
   
   const handleCopy = () => {
+    if (!shareToken) return;
     navigator.clipboard.writeText(shareUrl);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
@@ -73,26 +89,27 @@ export const MemoryShareModal: React.FC<MemoryShareModalProps> = ({ item, onClos
             />
             <button 
               onClick={handleCopy}
-              className="px-4 py-2 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
+              disabled={isLoading || !shareToken}
+              className="px-4 py-2 bg-[#8B5CF6] hover:bg-[#7C3AED] disabled:bg-[#8B5CF6]/50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
             >
-              {isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {isCopied ? 'Copied' : 'Copy'}
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {isLoading ? 'Wait' : isCopied ? 'Copied' : 'Copy'}
             </button>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <button className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] transition-colors">
+            <a href={shareToken ? `https://wa.me/?text=View%20this%20memory%20on%20Aurora:%20${shareUrl}` : '#'} target="_blank" rel="noopener noreferrer" className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] transition-colors ${!shareToken && 'opacity-50 pointer-events-none'}`}>
               <MessagesSquare className="w-6 h-6" />
               <span className="text-xs font-bold">WhatsApp</span>
-            </button>
-            <button className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-black hover:bg-white/5 border border-white/10 text-white transition-colors">
+            </a>
+            <a href={shareToken ? `https://twitter.com/intent/tweet?url=${shareUrl}&text=Check%20out%20this%20memory%20on%20Aurora` : '#'} target="_blank" rel="noopener noreferrer" className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-black hover:bg-white/5 border border-white/10 text-white transition-colors ${!shareToken && 'opacity-50 pointer-events-none'}`}>
               <Twitter className="w-6 h-6" />
               <span className="text-xs font-bold">X</span>
-            </button>
-            <button className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-[#0088cc]/10 hover:bg-[#0088cc]/20 text-[#0088cc] transition-colors">
+            </a>
+            <a href={shareToken ? `https://t.me/share/url?url=${shareUrl}&text=View%20this%20memory%20on%20Aurora` : '#'} target="_blank" rel="noopener noreferrer" className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-[#0088cc]/10 hover:bg-[#0088cc]/20 text-[#0088cc] transition-colors ${!shareToken && 'opacity-50 pointer-events-none'}`}>
               <Send className="w-6 h-6" />
               <span className="text-xs font-bold">Telegram</span>
-            </button>
+            </a>
           </div>
         </div>
       </div>

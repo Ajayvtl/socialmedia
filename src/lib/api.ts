@@ -101,10 +101,19 @@ api.interceptors.response.use(
     }
 );
 
+let globalCacheBuster = '';
+if (typeof window !== 'undefined') {
+    if (!(window as any).__mediaCacheBuster) {
+        (window as any).__mediaCacheBuster = Date.now().toString(36);
+    }
+    globalCacheBuster = (window as any).__mediaCacheBuster;
+}
+
 export const getMediaUrl = (url: string | null | undefined) => {
     if (!url) return '';
     const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api').replace('/api', '');
     
+    let finalUrl = url;
     if (url.startsWith('http')) {
         try {
             const parsedUrl = new URL(url);
@@ -113,12 +122,27 @@ export const getMediaUrl = (url: string | null | undefined) => {
                  parsedUrl.hostname = currentBaseUrl.hostname;
                  parsedUrl.port = currentBaseUrl.port;
                  parsedUrl.protocol = currentBaseUrl.protocol;
-                 return parsedUrl.toString();
+                 finalUrl = parsedUrl.toString();
             }
         } catch (e) {}
-        return url;
+    } else {
+        finalUrl = `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
     }
-    return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+
+    // Append session cache-buster to prevent stale DP/images
+    if (globalCacheBuster && typeof window !== 'undefined') {
+        try {
+            const u = new URL(finalUrl);
+            if (!u.searchParams.has('cb')) {
+                u.searchParams.set('cb', globalCacheBuster);
+            }
+            return u.toString();
+        } catch(e) {
+            return finalUrl;
+        }
+    }
+
+    return finalUrl;
 };
 
 export default api;

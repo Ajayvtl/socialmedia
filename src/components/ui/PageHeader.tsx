@@ -11,6 +11,7 @@ interface PageHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   description?: string;
   actions?: React.ReactNode;
   breadcrumbs?: BreadcrumbItem[];
+  badge?: string;
 }
 
 export function PageHeader({
@@ -18,6 +19,7 @@ export function PageHeader({
   description,
   actions,
   breadcrumbs,
+  badge,
   className,
   ...props
 }: PageHeaderProps) {
@@ -53,9 +55,16 @@ export function PageHeader({
           </nav>
         )}
 
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          {title}
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            {title}
+          </h1>
+          {badge && (
+            <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-bold uppercase tracking-wider">
+              {badge}
+            </span>
+          )}
+        </div>
         {description && (
           <p className="text-sm text-foreground/50 leading-relaxed max-w-2xl">
             {description}

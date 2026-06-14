@@ -1,8 +1,8 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { Cake, CalendarDays, Heart, Share2, Sparkles, Star } from "lucide-react";
-import GlassPanel from "@/components/ui/GlassPanel";
+import { Cake, CalendarDays, Heart, Share2, Sparkles, Star, Archive } from "lucide-react";
+import { GlassPanel } from "@/components/ui/GlassPanel";
 
 export default function HomeDashboard() {
   const { user } = useAuth();
@@ -13,7 +13,7 @@ export default function HomeDashboard() {
       {/* Welcome Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60">
-          Good morning, {user?.displayName || 'Ajay'} 👋
+          Good morning, {user?.name || 'Ajay'} 👋
         </h1>
         <p className="text-white/60 text-lg">
           The best thing about memories is making them.
@@ -70,6 +70,37 @@ export default function HomeDashboard() {
           <p className="text-2xl font-bold text-white">5</p>
           <p className="text-xs text-white/50 uppercase tracking-wider">Community Highlights</p>
         </GlassPanel>
+      </div>
+
+      {/* Continue Your Story (Memory Re-engagement) */}
+      <div className="pt-4">
+        <h2 className="text-xl font-bold flex items-center gap-2 text-white mb-4">
+          <Archive className="text-[#8B5CF6]" /> Continue Your Story
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          {/* Card 1 */}
+          <GlassPanel className="p-5 hover:-translate-y-1 transition-transform cursor-pointer group">
+            <h3 className="font-bold text-white text-lg mb-1">You and Dad</h3>
+            <p className="text-sm text-[#00E5FF] font-medium mb-3">243 memories</p>
+            <p className="text-xs text-white/40 group-hover:text-white/60 transition-colors">Last viewed 3 days ago</p>
+          </GlassPanel>
+
+          {/* Card 2 */}
+          <GlassPanel className="p-5 hover:-translate-y-1 transition-transform cursor-pointer group">
+            <h3 className="font-bold text-white text-lg mb-1">Family Goa Trip</h3>
+            <p className="text-sm text-[#FF4D8D] font-medium mb-3">42 memories</p>
+            <p className="text-xs text-white/40 group-hover:text-white/60 transition-colors">New memory added yesterday</p>
+          </GlassPanel>
+
+          {/* Card 3 */}
+          <GlassPanel className="p-5 hover:-translate-y-1 transition-transform cursor-pointer group">
+            <h3 className="font-bold text-white text-lg mb-1">Wedding Circle</h3>
+            <p className="text-sm text-[#FACC15] font-medium mb-3">187 memories</p>
+            <p className="text-xs text-white/40 group-hover:text-white/60 transition-colors">12 year anniversary in 18 days</p>
+          </GlassPanel>
+
+        </div>
       </div>
 
       {/* Discovery Section (Former Feed) */}

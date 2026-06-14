@@ -140,7 +140,6 @@ export const LifePlayback: React.FC<LifePlaybackProps> = ({ memories, onMemoryCl
                          src={item.thumbnail_url || item.url || ''} 
                          depthSrc={item.depth_map_url} 
                          className="w-full h-full"
-                         intensity={0.03} // Subtle intensity for small cards
                        />
                      ) : (
                        <ZoomableMedia className="w-full h-full">

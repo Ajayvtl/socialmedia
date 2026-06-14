@@ -357,61 +357,61 @@ export default function CommunityDetailsPage() {
               <button onClick={() => setShowEditModal(false)} className="text-foreground/60 hover:text-foreground">X</button>
             </div>
             
-            <form onSubmit={handleUpdateCommunity} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1 text-foreground/80">Community Name</label>
+            <form onSubmit={handleUpdateCommunity} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="col-span-1 md:col-span-2">
+                  <label className="block text-sm font-bold mb-2 text-foreground/80">Community Name</label>
                   <input 
                     type="text" 
                     value={editForm.name}
                     onChange={e => setEditForm({...editForm, name: e.target.value})}
-                    className="w-full bg-surface-secondary border border-border rounded-lg px-3 py-2 text-foreground"
+                    className="w-full bg-surface border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-3 text-foreground transition-all"
                     required
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground/80">Branded URL (Slug)</label>
+                  <label className="block text-sm font-bold mb-2 text-foreground/80">Branded URL (Slug)</label>
                   <input 
                     type="text" 
                     value={editForm.slug}
                     onChange={e => setEditForm({...editForm, slug: e.target.value})}
                     placeholder="e.g. my-awesome-hub"
-                    className="w-full bg-surface-secondary border border-border rounded-lg px-3 py-2 text-foreground"
+                    className="w-full bg-surface border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-3 text-foreground transition-all"
                   />
-                  <p className="text-xs text-primary mt-1">Normally requires 10,000 members. Unlocked for testing.</p>
+                  <p className="text-xs text-primary mt-1.5 font-medium">Normally requires 10,000 members. Unlocked for testing.</p>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground/80">Icon (Emoji fallback)</label>
+                  <label className="block text-sm font-bold mb-2 text-foreground/80">Icon (Emoji fallback)</label>
                   <input 
                     type="text" 
                     value={editForm.icon}
                     onChange={e => setEditForm({...editForm, icon: e.target.value})}
-                    className="w-full bg-surface-secondary border border-border rounded-lg px-3 py-2 text-foreground"
+                    className="w-full bg-surface border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-3 text-foreground transition-all"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground/80">Avatar Image</label>
+                <div className="bg-surface-secondary/50 p-4 rounded-2xl border border-border/50">
+                  <label className="block text-sm font-bold mb-3 text-foreground/80">Avatar Image</label>
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-surface-secondary border border-border flex items-center justify-center overflow-hidden shrink-0">
-                      {editForm.avatar_url ? <img src={getMediaUrl(editForm.avatar_url)} className="w-full h-full object-cover" alt="Avatar"/> : <Camera className="w-5 h-5 text-foreground/50"/>}
+                    <div className="w-16 h-16 rounded-2xl bg-surface border border-border/50 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                      {editForm.avatar_url ? <img src={getMediaUrl(editForm.avatar_url)} className="w-full h-full object-cover" alt="Avatar"/> : <Camera className="w-6 h-6 text-foreground/40"/>}
                     </div>
-                    <label className="cursor-pointer px-4 py-2 bg-surface-secondary border border-border rounded-lg text-sm text-foreground hover:bg-surface transition-colors flex items-center gap-2">
+                    <label className="cursor-pointer px-4 py-2.5 bg-surface border border-border/50 rounded-xl text-sm font-bold text-foreground hover:bg-surface-secondary hover:border-primary/50 transition-all flex items-center gap-2 flex-1 justify-center whitespace-nowrap">
                       <Camera className="w-4 h-4"/> Upload Avatar
                       <input type="file" accept="image/*" className="hidden" onChange={e => handleFileSelect(e, 'avatar')} />
                     </label>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground/80">Cover Image</label>
+                <div className="bg-surface-secondary/50 p-4 rounded-2xl border border-border/50">
+                  <label className="block text-sm font-bold mb-3 text-foreground/80">Cover Image</label>
                   <div className="flex items-center gap-4">
-                    <div className="w-24 h-12 rounded-xl bg-surface-secondary border border-border flex items-center justify-center overflow-hidden shrink-0">
-                      {editForm.cover_url ? <img src={getMediaUrl(editForm.cover_url)} className="w-full h-full object-cover" alt="Cover"/> : <ImageIcon className="w-5 h-5 text-foreground/50"/>}
+                    <div className="w-24 h-16 rounded-2xl bg-surface border border-border/50 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                      {editForm.cover_url ? <img src={getMediaUrl(editForm.cover_url)} className="w-full h-full object-cover" alt="Cover"/> : <ImageIcon className="w-6 h-6 text-foreground/40"/>}
                     </div>
-                    <label className="cursor-pointer px-4 py-2 bg-surface-secondary border border-border rounded-lg text-sm text-foreground hover:bg-surface transition-colors flex items-center gap-2">
+                    <label className="cursor-pointer px-4 py-2.5 bg-surface border border-border/50 rounded-xl text-sm font-bold text-foreground hover:bg-surface-secondary hover:border-primary/50 transition-all flex items-center gap-2 flex-1 justify-center whitespace-nowrap">
                       <ImageIcon className="w-4 h-4"/> Upload Cover
                       <input type="file" accept="image/*" className="hidden" onChange={e => handleFileSelect(e, 'cover')} />
                     </label>

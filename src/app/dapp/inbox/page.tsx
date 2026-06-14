@@ -248,6 +248,14 @@ export default function InboxPage() {
       });
     });
 
+    newSocket.on("community_message_error", (data) => {
+      toast.error(data.message || "Failed to send community message");
+    });
+    
+    newSocket.on("event_message_error", (data) => {
+      toast.error(data.message || "Failed to send event message");
+    });
+
     newSocket.on("messages_read", ({ readerId }) => {
       setMessages(prev => prev.map(m => 
         (m.receiver_id === readerId && m.sender_id === myUserId) ? { ...m, is_read: 1, read_at: new Date().toISOString() } : m

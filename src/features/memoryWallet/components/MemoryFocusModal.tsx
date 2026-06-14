@@ -50,8 +50,8 @@ export const MemoryFocusModal: React.FC<MemoryFocusModalProps> = ({ item, onClos
             ) : item.depth_map_url ? (
               <div className="w-full h-full flex items-center justify-center">
                 <SpatialPhoto 
-                  src={item.url || item.thumbnail_url || ''} 
-                  depthSrc={item.depth_map_url} 
+                  src={getMediaUrl(item.url || item.thumbnail_url || '')} 
+                  depthSrc={getMediaUrl(item.depth_map_url)} 
                   className="w-full h-full max-w-full max-h-full"
                 />
               </div>

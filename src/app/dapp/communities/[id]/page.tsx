@@ -18,6 +18,7 @@ import InviteModal from "@/components/communities/InviteModal";
 import CreateEventModal from "@/components/events/CreateEventModal";
 import EventCard from "@/components/events/EventCard";
 import { Calendar } from "lucide-react";
+import DOMPurify from "isomorphic-dompurify";
 
 export default function CommunityDetailsPage() {
   const { id } = useParams();
@@ -235,7 +236,7 @@ export default function CommunityDetailsPage() {
             <div className="flex-1 text-center md:text-left mt-4 md:mt-0">
               <h1 className="text-4xl font-extrabold text-foreground mb-2">{community.name}</h1>
               {community.description && (
-                <div className="text-foreground/80 mb-4 prose prose-invert prose-sm max-w-none" dangerouslySetInnerHTML={{__html: community.description}}></div>
+                <div className="text-foreground/80 mb-4 prose prose-invert prose-sm max-w-none" dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(community.description)}}></div>
               )}
               
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-6">
@@ -635,7 +636,7 @@ export default function CommunityDetailsPage() {
               </h3>
               <div 
                 className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed prose prose-invert prose-sm max-w-none"
-                dangerouslySetInnerHTML={{__html: community.rules}}
+                dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(community.rules)}}
               >
               </div>
             </GlassPanel>
@@ -699,7 +700,7 @@ export default function CommunityDetailsPage() {
                   </h3>
                   <div 
                     className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed prose prose-invert prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{__html: community.rules}}
+                    dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(community.rules)}}
                   >
                   </div>
                 </div>

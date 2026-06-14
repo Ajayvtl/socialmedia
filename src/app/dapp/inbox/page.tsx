@@ -71,7 +71,7 @@ export default function InboxPage() {
         if (mediaChunksRef.current.length === 0) return; // cancelled
 
         const blob = new Blob(mediaChunksRef.current, { type: type === 'video' ? 'video/webm' : 'audio/webm' });
-        const file = new File([blob], \`recording.\${type === 'video' ? 'webm' : 'weba'}\`, { type: type === 'video' ? 'video/webm' : 'audio/webm' });
+        const file = new File([blob], `recording.${type === 'video' ? 'webm' : 'weba'}`, { type: type === 'video' ? 'video/webm' : 'audio/webm' });
         
         const formData = new FormData();
         formData.append('files', file);

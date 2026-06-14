@@ -9,7 +9,7 @@ import api, { getMediaUrl } from "@/lib/api";
 import { 
   Home, Compass, Users, Heart, Calendar, MessageCircle, Sparkles, 
   Wallet, Trophy, Bookmark, MoreHorizontal, Loader2, Plus, Search, LogOut, Briefcase, GitMerge, Archive,
-  Menu, X
+  Menu, X, Settings
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -31,19 +31,48 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
   const hideNav = isPublicDappPage || pathname === "/dapp/onboarding";
   const showNav = !hideNav;
 
-  // Final Aurora Navigation Architecture
-  const navItems = [
-    { key: "home", href: "/dapp/home", label: "Home", icon: Home, badge: 0 },
-    { key: "relationships", href: "/dapp/family-graph", label: "Relationships", icon: Heart, badge: 0 },
-    { key: "memories", href: "/dapp/memories", label: "Memories", icon: Archive, badge: 0 },
-    { key: "communities", href: "/dapp/communities", label: "Communities", icon: Users, badge: 0 },
-    { key: "messages", href: "/dapp/inbox", label: "Messages", icon: MessageCircle, badge: unreadCount },
-    { key: "marketplace", href: "/dapp/marketplace", label: "Marketplace (Beta)", icon: Briefcase, badge: 0 },
-    { key: "more", href: "#", label: "More", icon: MoreHorizontal, badge: 0 },
+  // Final Aurora Navigation Architecture - Grouped
+  const navigationGroups = [
+    {
+      title: "Core Feed",
+      items: [
+        { key: "home", href: "/dapp/home", label: "Home", icon: Home, badge: 0 },
+        { key: "feed", href: "/dapp/feed", label: "Discovery Feed", icon: Compass, badge: 0 },
+        { key: "messages", href: "/dapp/inbox", label: "Inbox Messages", icon: MessageCircle, badge: unreadCount },
+        { key: "communities", href: "/dapp/communities", label: "Communities", icon: Users, badge: 0 },
+      ]
+    },
+    {
+      title: "Family & Legacy",
+      items: [
+        { key: "relationships", href: "/dapp/family-graph", label: "Relationships", icon: Heart, badge: 0 },
+        { key: "memory-wallet", href: "/dapp/memory-wallet", label: "Memory Wallet", icon: Archive, badge: 0 },
+        { key: "memories-overview", href: "/dapp/memories", label: "Legacy Explorer", icon: Heart, badge: 0 },
+        { key: "events", href: "/dapp/events", label: "Family Events", icon: Calendar, badge: 0 },
+      ]
+    },
+    {
+      title: "Ecosystem & Web3",
+      items: [
+        { key: "wallet", href: "/dapp/wallet", label: "Web3 Wallet", icon: Wallet, badge: 0 },
+        { key: "avatar", href: "/dapp/avatar", label: "Avatar Studio", icon: Sparkles, badge: 0 },
+        { key: "creator", href: "/dapp/creator", label: "Creator Hub", icon: Trophy, badge: 0 },
+        { key: "marketplace", href: "/dapp/marketplace", label: "Marketplace (Beta)", icon: Briefcase, badge: 0 },
+      ]
+    },
+    {
+      title: "Account",
+      items: [
+        { key: "settings", href: "/dapp/settings", label: "System Settings", icon: Settings, badge: 0 }
+      ]
+    }
   ];
 
   if (user && ['SUPER_ADMIN', 'COMPANY_ADMIN', 'SUPPORT_ADMIN', 'DEVELOPER'].includes(user.role || '')) {
-    navItems.push({ key: "admin", href: "/dapp/admin", label: "Admin Portal", icon: Briefcase, badge: 0 });
+    const accountGroup = navigationGroups.find(g => g.title === "Account");
+    if (accountGroup) {
+      accountGroup.items.push({ key: "admin", href: "/dapp/admin", label: "Admin Portal", icon: Briefcase, badge: 0 });
+    }
   }
 
   useEffect(() => {
@@ -134,21 +163,28 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
           </div>
 
           {/* Main Navigation */}
-          <nav className="flex-1 px-4 space-y-1 pb-4">
-             {navItems.map((item) => {
-               const active = pathname.startsWith(item.href) && item.href !== "#";
-               return (
-                 <Link key={item.key} href={item.href} className={`flex items-center justify-between px-4 py-3 rounded-2xl transition-all group ${active ? 'bg-white/[0.08] shadow-[0_0_20px_rgba(0,229,255,0.1)] border border-white/[0.08]' : 'hover:bg-white/[0.05]'}`}>
-                   <div className="flex items-center gap-4">
-                     <item.icon className={`w-5 h-5 transition-colors ${active ? 'text-[#00E5FF]' : 'text-white/60 group-hover:text-white'}`} />
-                     <span className={`text-sm font-medium ${active ? 'text-white' : 'text-white/60 group-hover:text-white'}`}>{item.label}</span>
-                   </div>
-                   {item.badge > 0 && (
-                     <span className="bg-[#FF4D8D] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(255,77,141,0.5)]">{item.badge}</span>
-                   )}
-                 </Link>
-               )
-             })}
+          <nav className="flex-1 px-4 space-y-6 pb-4">
+             {navigationGroups.map((group) => (
+               <div key={group.title} className="space-y-1">
+                 <h5 className="px-4 text-[10px] font-bold uppercase tracking-widest text-white/30 mb-2">
+                   {group.title}
+                 </h5>
+                 {group.items.map((item) => {
+                   const active = pathname.startsWith(item.href) && item.href !== "#";
+                   return (
+                     <Link key={item.key} href={item.href} className={`flex items-center justify-between px-4 py-2.5 rounded-2xl transition-all group ${active ? 'bg-white/[0.08] shadow-[0_0_20px_rgba(0,229,255,0.1)] border border-white/[0.08]' : 'hover:bg-white/[0.05]'}`}>
+                       <div className="flex items-center gap-3">
+                         <item.icon className={`w-4 h-4 transition-colors ${active ? 'text-[#00E5FF]' : 'text-white/60 group-hover:text-white'}`} />
+                         <span className={`text-xs font-medium ${active ? 'text-white' : 'text-white/60 group-hover:text-white'}`}>{item.label}</span>
+                       </div>
+                       {item.badge > 0 && (
+                         <span className="bg-[#FF4D8D] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-[0_0_10px_rgba(255,77,141,0.5)]">{item.badge}</span>
+                       )}
+                     </Link>
+                   )
+                 })}
+               </div>
+             ))}
           </nav>
 
           {/* User Profile & Extras */}

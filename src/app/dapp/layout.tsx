@@ -34,7 +34,7 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
   // Final Aurora Navigation Architecture
   const navItems = [
     { key: "home", href: "/dapp/home", label: "Home", icon: Home, badge: 0 },
-    { key: "relationships", href: "/dapp/relationships", label: "Relationships", icon: Heart, badge: 0 },
+    { key: "relationships", href: "/dapp/family-graph", label: "Relationships", icon: Heart, badge: 0 },
     { key: "memories", href: "/dapp/memories", label: "Memories", icon: Archive, badge: 0 },
     { key: "communities", href: "/dapp/communities", label: "Communities", icon: Users, badge: 0 },
     { key: "messages", href: "/dapp/inbox", label: "Messages", icon: MessageCircle, badge: unreadCount },
@@ -42,7 +42,7 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
     { key: "more", href: "#", label: "More", icon: MoreHorizontal, badge: 0 },
   ];
 
-  if (user && ['USER', 'SUPER_ADMIN', 'COMPANY_ADMIN', 'SUPPORT_ADMIN', 'DEVELOPER'].includes(user.role || '')) {
+  if (user && ['SUPER_ADMIN', 'COMPANY_ADMIN', 'SUPPORT_ADMIN', 'DEVELOPER'].includes(user.role || '')) {
     navItems.push({ key: "admin", href: "/dapp/admin", label: "Admin Portal", icon: Briefcase, badge: 0 });
   }
 

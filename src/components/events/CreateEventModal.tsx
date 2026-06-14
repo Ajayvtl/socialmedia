@@ -10,9 +10,10 @@ import { getCroppedImg } from '@/lib/cropImage';
 interface Props {
   onClose: () => void;
   onSuccess: () => void;
+  communityId?: number;
 }
 
-export default function CreateEventModal({ onClose, onSuccess }: Props) {
+export default function CreateEventModal({ onClose, onSuccess, communityId }: Props) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -26,7 +27,10 @@ export default function CreateEventModal({ onClose, onSuccess }: Props) {
     start_time: '',
     end_date: '',
     end_time: '',
-    max_attendees: ''
+    max_attendees: '',
+    ticket_type: 'FREE',
+    ticket_price: '',
+    currency: 'USD'
   });
 
   const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
@@ -87,9 +91,11 @@ export default function CreateEventModal({ onClose, onSuccess }: Props) {
 
       await api.post('/events', {
         ...formData,
+        community_id: communityId || null,
         start_time: startDateTime,
         end_time: endDateTime,
-        max_attendees: formData.max_attendees ? parseInt(formData.max_attendees) : null
+        max_attendees: formData.max_attendees ? parseInt(formData.max_attendees) : null,
+        ticket_price: formData.ticket_price ? parseFloat(formData.ticket_price) : 0
       });
 
       toast.success("Event created successfully!");
@@ -267,6 +273,44 @@ export default function CreateEventModal({ onClose, onSuccess }: Props) {
                   placeholder="Leave blank for unlimited"
                   className="w-full bg-surface border border-border/50 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary transition-colors"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-foreground/80 mb-2">Ticketing <span className="text-foreground/40 font-normal">(Optional)</span></label>
+                <div className="flex items-center gap-3 mb-3">
+                  <button 
+                    onClick={() => setFormData({...formData, ticket_type: 'FREE', ticket_price: ''})}
+                    className={`flex-1 py-2 rounded-xl border text-sm font-bold transition-all ${formData.ticket_type === 'FREE' ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border/50 text-foreground/60 hover:border-border'}`}
+                  >
+                    Free Entry
+                  </button>
+                  <button 
+                    onClick={() => setFormData({...formData, ticket_type: 'PAID'})}
+                    className={`flex-1 py-2 rounded-xl border text-sm font-bold transition-all ${formData.ticket_type === 'PAID' ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border/50 text-foreground/60 hover:border-border'}`}
+                  >
+                    Paid Ticket
+                  </button>
+                </div>
+                {formData.ticket_type === 'PAID' && (
+                  <div className="flex gap-3 animate-in slide-in-from-top-2">
+                    <input 
+                      type="number"
+                      value={formData.ticket_price}
+                      onChange={e => setFormData({...formData, ticket_price: e.target.value})}
+                      placeholder="Ticket Price"
+                      className="flex-1 bg-surface border border-border/50 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary transition-colors"
+                    />
+                    <select 
+                      value={formData.currency}
+                      onChange={e => setFormData({...formData, currency: e.target.value})}
+                      className="w-24 bg-surface border border-border/50 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary transition-colors appearance-none"
+                    >
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                    </select>
+                  </div>
+                )}
               </div>
             </div>
           )}

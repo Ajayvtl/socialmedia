@@ -15,6 +15,8 @@ import ImageCropperModal from "@/components/ui/ImageCropperModal";
 import { getCroppedImg } from "@/lib/cropImage";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import InviteModal from "@/components/communities/InviteModal";
+import CreateEventModal from "@/components/events/CreateEventModal";
+import { Calendar } from "lucide-react";
 
 export default function CommunityDetailsPage() {
   const { id } = useParams();
@@ -39,6 +41,7 @@ export default function CommunityDetailsPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showCreateEventModal, setShowCreateEventModal] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -279,9 +282,14 @@ export default function CommunityDetailsPage() {
                   <LinkIcon className="w-4 h-4 mr-2"/> Copy Link
                 </GlowButton>
                 {isMember && (
-                  <GlowButton variant="secondary" onClick={() => setShowInviteModal(true)}>
-                    <UserPlus className="w-4 h-4 mr-2"/> Invite
-                  </GlowButton>
+                  <>
+                    <GlowButton variant="secondary" onClick={() => setShowInviteModal(true)}>
+                      <UserPlus className="w-4 h-4 mr-2"/> Invite
+                    </GlowButton>
+                    <GlowButton variant="secondary" onClick={() => setShowCreateEventModal(true)}>
+                      <Calendar className="w-4 h-4 mr-2"/> Host Event
+                    </GlowButton>
+                  </>
                 )}
                 <GlowButton variant="secondary" onClick={() => setShowQR(!showQR)}>
                   <QrCode className="w-4 h-4 mr-2"/> QR Code
@@ -657,6 +665,17 @@ export default function CommunityDetailsPage() {
           communityId={community.id}
           communityName={community.name}
           onClose={() => setShowInviteModal(false)}
+        />
+      )}
+
+      {showCreateEventModal && (
+        <CreateEventModal 
+          communityId={community.id}
+          onClose={() => setShowCreateEventModal(false)}
+          onSuccess={() => {
+             setShowCreateEventModal(false);
+             toast.success("Community Event published successfully!");
+          }}
         />
       )}
     </div>

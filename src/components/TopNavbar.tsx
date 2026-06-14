@@ -8,12 +8,13 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import api, { getMediaUrl } from '@/lib/api';
 import { safeObject } from "@/lib/utils";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { getCompanyRoleScope } from "@/lib/companyRoleScope";
 
 export default function TopNavbar() {
     const { user, logout, currentHotel, availableHotels } = useAuth();
     const pathname = usePathname();
+    const router = useRouter();
     const { isDarkMode, toggleTheme, increaseFontSize, decreaseFontSize, toggleSidebar, sidebarCollapsed } = useTheme();
     const { settings, setResult } = useSettings();
     const [ipAddress, setIpAddress] = useState<string>('Loading...');

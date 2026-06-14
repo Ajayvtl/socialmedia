@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-import { Send, Search, Info, Image as ImageIcon, Smile, MoreVertical, Loader2, ArrowLeft, Check, CheckCheck, Settings, FileBox } from "lucide-react";
+import { Send, Search, Info, Image as ImageIcon, Smile, MoreVertical, Loader2, ArrowLeft, Check, CheckCheck, Settings, FileBox, Mic, Video, Square, Trash2 } from "lucide-react";
 import { io, Socket } from "socket.io-client";
 import api, { getMediaUrl } from "@/lib/api";
 import toast from "react-hot-toast";
@@ -29,6 +29,92 @@ export default function InboxPage() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [gifSearchTerm, setGifSearchTerm] = useState("");
+
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [isRecordingVideo, setIsRecordingVideo] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaChunksRef = useRef<BlobPart[]>([]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const videoPreviewRef = useRef<HTMLVideoElement>(null);
+
+  const formatRecTime = (sec: number) => \`\${Math.floor(sec/60)}:\${(sec%60).toString().padStart(2, '0')}\`;
+
+  const startRecording = async (type: 'audio' | 'video') => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: true, 
+        video: type === 'video' 
+      });
+      
+      if (type === 'video' && videoPreviewRef.current) {
+         videoPreviewRef.current.srcObject = stream;
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      mediaChunksRef.current = [];
+      
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) mediaChunksRef.current.push(e.data);
+      };
+      
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(track => track.stop());
+        if (timerRef.current) clearInterval(timerRef.current);
+        setRecordingTime(0);
+        
+        if (type === 'video' && videoPreviewRef.current) {
+           videoPreviewRef.current.srcObject = null;
+        }
+
+        if (mediaChunksRef.current.length === 0) return; // cancelled
+
+        const blob = new Blob(mediaChunksRef.current, { type: type === 'video' ? 'video/webm' : 'audio/webm' });
+        const file = new File([blob], \`recording.\${type === 'video' ? 'webm' : 'weba'}\`, { type: type === 'video' ? 'video/webm' : 'audio/webm' });
+        
+        const formData = new FormData();
+        formData.append('files', file);
+        setIsUploading(true);
+        try {
+          const res = await api.post('/media/upload-multiple', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+          if (res.data?.data?.[0]) {
+             sendMessage(res.data.data[0].url, type);
+          }
+        } catch (err) {
+          toast.error('Failed to send recording');
+        } finally {
+          setIsUploading(false);
+        }
+      };
+      
+      mediaRecorder.start();
+      if (type === 'audio') setIsRecordingAudio(true);
+      if (type === 'video') setIsRecordingVideo(true);
+      
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+    } catch (err) {
+      toast.error(\`Microphone/Camera access denied\`);
+    }
+  };
+
+  const stopRecording = (cancel = false) => {
+    if (cancel) {
+       mediaChunksRef.current = []; // clear chunks so upload skips
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecordingAudio(false);
+    setIsRecordingVideo(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+    setRecordingTime(0);
+  };
 
   const fetchGifs = useCallback((offset: number) => {
     return gifSearchTerm 
@@ -383,7 +469,9 @@ export default function InboxPage() {
                             {msg.media_url && (
                               <div className="relative mb-1 rounded-lg overflow-hidden max-w-[280px]">
                                 {msg.media_type === 'video' ? (
-                                  <video src={getMediaUrl(msg.media_url)} controls className="w-full" />
+                                  <video src={getMediaUrl(msg.media_url)} controls className="w-full max-h-[300px] bg-black" />
+                                ) : msg.media_type === 'audio' ? (
+                                  <audio src={getMediaUrl(msg.media_url)} controls className="w-[240px] h-[40px] mt-1 mb-1 custom-audio" />
                                 ) : (
                                   <img src={getMediaUrl(msg.media_url)} className="w-full h-auto object-cover max-h-[300px]" />
                                 )}
@@ -517,61 +605,103 @@ export default function InboxPage() {
                   </div>
                 )}
 
-                <div className="flex items-end gap-2 bg-surface-secondary border border-border/50 rounded-[24px] px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all shadow-inner relative">
-                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" onChange={handleFileUpload} />
-                  <button onClick={() => fileInputRef.current?.click()} className="text-foreground/50 hover:text-primary transition-colors p-2 mb-1 shrink-0" disabled={isUploading}>
-                    {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5"/>}
-                  </button>
-                  <textarea 
-                    placeholder="Message..." 
-                    value={inputValue}
-                    onChange={e => setInputValue(e.target.value)}
-                    onFocus={() => {
-                      setShowEmojiPicker(false);
-                      setShowGifPicker(false);
-                    }}
-                    className="flex-1 bg-transparent border-none focus:outline-none text-[15px] text-foreground placeholder:text-foreground/40 py-2.5 resize-none min-h-[44px] max-h-[120px] custom-scrollbar"
-                    rows={1}
-                    onInput={(e) => {
-                      const target = e.target as HTMLTextAreaElement;
-                      target.style.height = 'auto';
-                      target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
-                    }}
-                  />
-                  <button 
-                    onClick={() => {
-                      setShowGifPicker(!showGifPicker);
-                      setShowEmojiPicker(false);
-                    }}
-                    className={`text-foreground/50 hover:text-[#00E5FF] transition-colors p-2 mb-1 shrink-0 ${showGifPicker ? 'text-[#00E5FF]' : ''}`}
-                  >
-                    <FileBox className="w-5 h-5"/>
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setShowEmojiPicker(!showEmojiPicker);
-                      setShowGifPicker(false);
-                    }}
-                    className={`text-foreground/50 hover:text-[#FACC15] transition-colors p-2 mb-1 shrink-0 ${showEmojiPicker ? 'text-[#FACC15]' : ''}`}
-                  >
-                    <Smile className="w-5 h-5"/>
-                  </button>
-                  <button 
-                    onClick={() => {
-                      sendMessage();
-                      setShowEmojiPicker(false);
-                      setShowGifPicker(false);
-                      // Reset textarea height
-                      setTimeout(() => {
-                        const ta = document.querySelector('textarea');
-                        if (ta) ta.style.height = 'auto';
-                      }, 0);
-                    }}
-                    disabled={!inputValue.trim() && !isUploading}
-                    className="w-10 h-10 mb-1 rounded-full bg-primary flex items-center justify-center shrink-0 disabled:opacity-50 disabled:scale-95 hover:opacity-90 hover:scale-105 active:scale-95 transition-all shadow-md"
-                  >
-                    <Send className="w-4 h-4 ml-0.5 text-primary-foreground" />
-                  </button>
+                <div className="flex flex-col">
+                  {isRecordingVideo && (
+                     <div className="mb-2 rounded-xl overflow-hidden border border-border/50 bg-black max-w-[200px] relative shadow-lg">
+                        <video ref={videoPreviewRef} autoPlay muted playsInline className="w-full h-auto object-cover" style={{ transform: 'scaleX(-1)' }} />
+                        <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">REC {formatRecTime(recordingTime)}</div>
+                     </div>
+                  )}
+                  <div className="flex items-end gap-2 bg-surface-secondary border border-border/50 rounded-[24px] px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all shadow-inner relative">
+                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*,video/*" onChange={handleFileUpload} />
+                    <button onClick={() => fileInputRef.current?.click()} className="text-foreground/50 hover:text-primary transition-colors p-2 mb-1 shrink-0" disabled={isUploading || isRecordingAudio || isRecordingVideo}>
+                      {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5"/>}
+                    </button>
+                    
+                    {(isRecordingAudio || isRecordingVideo) ? (
+                      <div className="flex-1 flex items-center justify-between py-2.5 px-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
+                          <span className="text-red-500 font-mono font-bold tracking-widest">{formatRecTime(recordingTime)}</span>
+                          <span className="text-foreground/50 text-sm font-medium">{isRecordingAudio ? 'Recording Audio...' : 'Recording Video...'}</span>
+                        </div>
+                        <button onClick={() => stopRecording(true)} className="p-2 text-foreground/50 hover:text-red-500 transition-colors">
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <textarea 
+                        placeholder="Message..." 
+                        value={inputValue}
+                        onChange={e => setInputValue(e.target.value)}
+                        onFocus={() => {
+                          setShowEmojiPicker(false);
+                          setShowGifPicker(false);
+                        }}
+                        className="flex-1 bg-transparent border-none focus:outline-none text-[15px] text-foreground placeholder:text-foreground/40 py-2.5 resize-none min-h-[44px] max-h-[120px] custom-scrollbar"
+                        rows={1}
+                        onInput={(e) => {
+                          const target = e.target as HTMLTextAreaElement;
+                          target.style.height = 'auto';
+                          target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
+                        }}
+                      />
+                    )}
+                    
+                    {!(isRecordingAudio || isRecordingVideo) && (
+                      <>
+                        <button onClick={() => startRecording('video')} className="text-foreground/50 hover:text-primary transition-colors p-2 mb-1 shrink-0">
+                          <Video className="w-5 h-5"/>
+                        </button>
+                        <button onClick={() => startRecording('audio')} className="text-foreground/50 hover:text-primary transition-colors p-2 mb-1 shrink-0">
+                          <Mic className="w-5 h-5"/>
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setShowGifPicker(!showGifPicker);
+                            setShowEmojiPicker(false);
+                          }}
+                          className={`text-foreground/50 hover:text-[#00E5FF] transition-colors p-2 mb-1 shrink-0 ${showGifPicker ? 'text-[#00E5FF]' : ''}`}
+                        >
+                          <FileBox className="w-5 h-5"/>
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setShowEmojiPicker(!showEmojiPicker);
+                            setShowGifPicker(false);
+                          }}
+                          className={`text-foreground/50 hover:text-[#FACC15] transition-colors p-2 mb-1 shrink-0 ${showEmojiPicker ? 'text-[#FACC15]' : ''}`}
+                        >
+                          <Smile className="w-5 h-5"/>
+                        </button>
+                      </>
+                    )}
+                    
+                    {(isRecordingAudio || isRecordingVideo) ? (
+                      <button 
+                        onClick={() => stopRecording(false)}
+                        className="w-10 h-10 mb-1 rounded-full bg-red-500 flex items-center justify-center shrink-0 hover:bg-red-600 transition-all shadow-md"
+                      >
+                        <Square className="w-4 h-4 text-white" />
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => {
+                          sendMessage();
+                          setShowEmojiPicker(false);
+                          setShowGifPicker(false);
+                          setTimeout(() => {
+                            const ta = document.querySelector('textarea');
+                            if (ta) ta.style.height = 'auto';
+                          }, 0);
+                        }}
+                        disabled={!inputValue.trim() && !isUploading}
+                        className="w-10 h-10 mb-1 rounded-full bg-primary flex items-center justify-center shrink-0 disabled:opacity-50 disabled:scale-95 hover:opacity-90 hover:scale-105 active:scale-95 transition-all shadow-md"
+                      >
+                        <Send className="w-4 h-4 ml-0.5 text-primary-foreground" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </>

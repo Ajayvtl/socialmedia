@@ -38,7 +38,7 @@ export default function InboxPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
 
-  const formatRecTime = (sec: number) => \`\${Math.floor(sec/60)}:\${(sec%60).toString().padStart(2, '0')}\`;
+  const formatRecTime = (sec: number) => `${Math.floor(sec/60)}:${(sec%60).toString().padStart(2, '0')}`;
 
   const startRecording = async (type: 'audio' | 'video') => {
     try {

@@ -75,8 +75,10 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// Setup rate-limit interceptor for 429 response errors
-securityService.setupRateLimitInterceptor(api);
+// Setup rate-limit interceptor for 429 response errors (Client-side only)
+if (typeof window !== 'undefined' && securityService && typeof securityService.setupRateLimitInterceptor === 'function') {
+    securityService.setupRateLimitInterceptor(api);
+}
 
 api.interceptors.response.use(
     (response) => response,

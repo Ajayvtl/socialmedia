@@ -99,7 +99,7 @@ export default function InboxPage() {
       }, 1000);
       
     } catch (err) {
-      toast.error(\`Microphone/Camera access denied\`);
+      toast.error('Microphone/Camera access denied');
     }
   };
 

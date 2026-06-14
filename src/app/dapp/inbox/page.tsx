@@ -527,9 +527,9 @@ export default function InboxPage() {
                             )}
 
                             {msg.media_url && (
-                              <div className={`relative mb-1 overflow-hidden ${msg.media_url.includes('recording.webm') || msg.media_type === 'video' ? 'rounded-full w-64 h-64 border-4 border-surface shadow-lg mx-auto flex items-center justify-center bg-black' : 'rounded-xl max-w-[280px]'}`}>
+                              <div className={`relative mb-1 overflow-hidden max-w-full ${msg.media_url.includes('recording.webm') ? 'rounded-full w-64 h-64 border-4 border-surface shadow-lg mx-auto flex items-center justify-center bg-black' : 'rounded-xl max-w-[280px]'}`}>
                                 {msg.media_type === 'video' ? (
-                                  <video src={getMediaUrl(msg.media_url)} controls controlsList="nodownload" className={`w-full h-full ${msg.media_url.includes('recording.webm') ? 'object-cover scale-[1.3]' : 'object-contain bg-black'}`} />
+                                  <video src={getMediaUrl(msg.media_url)} controls={!msg.media_url.includes('recording.webm')} autoPlay={msg.media_url.includes('recording.webm')} muted={msg.media_url.includes('recording.webm')} loop={msg.media_url.includes('recording.webm')} controlsList="nodownload" className={`max-w-full ${msg.media_url.includes('recording.webm') ? 'w-full h-full object-cover scale-[1.3]' : 'w-full object-contain bg-black rounded-xl max-h-[300px]'}`} />
                                 ) : msg.media_type === 'audio' ? (
                                   <audio src={getMediaUrl(msg.media_url)} controls className="w-[240px] h-[40px] mt-1 mb-1 custom-audio" />
                                 ) : (

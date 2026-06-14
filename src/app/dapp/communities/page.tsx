@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AppImage } from "@/components/ui/AppImage";
 import { AnimatedContainer } from "@/components/ui/AnimatedContainer";
-import { Users, Hash, Plus, ShieldCheck, Globe, MapPin, Sparkles } from "lucide-react";
+import { Users, Hash, Plus, ShieldCheck, Globe, MapPin, Sparkles, Camera } from "lucide-react";
 import toast from "react-hot-toast";
 
 type Community = {

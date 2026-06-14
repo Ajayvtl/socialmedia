@@ -1,124 +1,240 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { Cake, CalendarDays, Heart, Share2, Sparkles, Star, Archive } from "lucide-react";
+import { useEffect, useState } from "react";
+import api from "@/lib/api";
+import { Cake, CalendarDays, Heart, Share2, Sparkles, Star, Archive, Loader2 } from "lucide-react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
+import Link from "next/link";
 
 export default function HomeDashboard() {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   
+  // Dashboard states
+  const [upcomingBirthdays, setUpcomingBirthdays] = useState<any[]>([]);
+  const [taggedMemories, setTaggedMemories] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    milestones: 0,
+    upcomingEvents: 0,
+    communityHighlights: 0
+  });
+  const [vaults, setVaults] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // 1. Fetch family graph (for birthdays)
+      const graphRes = await api.get('/family-graph/me');
+      const relationships = graphRes.data?.data?.relationships || [];
+      
+      // Parse upcoming birthdays
+      const today = new Date();
+      const birthdaysList = relationships
+        .filter((r: any) => r.dob)
+        .map((r: any) => {
+          const dobDate = new Date(r.dob);
+          const birthdayThisYear = new Date(today.getFullYear(), dobDate.getMonth(), dobDate.getDate());
+          if (birthdayThisYear < today) {
+            birthdayThisYear.setFullYear(today.getFullYear() + 1);
+          }
+          const diffTime = Math.abs(birthdayThisYear.getTime() - today.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          return {
+            name: r.display_name || r.related_name || 'Family member',
+            relationship: r.relationship_type,
+            daysLeft: diffDays,
+            dateStr: dobDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+          };
+        })
+        .sort((a: any, b: any) => a.daysLeft - b.daysLeft)
+        .slice(0, 2);
+      
+      setUpcomingBirthdays(birthdaysList);
+
+      // 2. Fetch shared/tagged memories
+      const taggedRes = await api.get('/shared-memories/tagged/me');
+      setTaggedMemories(taggedRes.data?.data || []);
+
+      // 3. Fetch vaults for "Continue your story"
+      const vaultsRes = await api.get('/memory-wallet/vaults');
+      setVaults(vaultsRes.data?.data || []);
+
+      // 4. Fetch events & stats
+      const eventsRes = await api.get('/events');
+      const events = eventsRes.data?.data || [];
+      
+      const communitiesRes = await api.get('/communities');
+      const communities = communitiesRes.data?.data || [];
+
+      setStats({
+        milestones: relationships.length,
+        upcomingEvents: events.filter((e: any) => new Date(e.start_time) >= today).length,
+        communityHighlights: communities.length
+      });
+
+    } catch (e) {
+      console.error("Failed to load home dashboard telemetry/data:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 animate-fade-in">
       
       {/* Welcome Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60">
-          Good morning, {user?.name || 'Ajay'} 👋
+          Welcome back, {user?.name || user?.email || 'Ajay'} 👋
         </h1>
         <p className="text-white/60 text-lg">
           The best thing about memories is making them.
         </p>
       </div>
 
-      {/* Relationship Dashboard Highlights */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        
-        <GlassPanel className="p-6 relative overflow-hidden group hover:shadow-[0_0_30px_rgba(255,77,141,0.15)] transition-shadow">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Cake size={80} />
-          </div>
-          <h3 className="text-[#FF4D8D] font-bold flex items-center gap-2 mb-2">
-            <Cake size={18} /> Today's Family Updates
-          </h3>
-          <p className="text-xl font-medium text-white">Mom's Birthday Tomorrow</p>
-          <button className="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-sm font-medium transition-colors">
-            Send a Memory
-          </button>
-        </GlassPanel>
-
-        <GlassPanel className="p-6 relative overflow-hidden group hover:shadow-[0_0_30px_rgba(139,92,246,0.15)] transition-shadow">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Share2 size={80} />
-          </div>
-          <h3 className="text-[#8B5CF6] font-bold flex items-center gap-2 mb-2">
-            <Share2 size={18} /> Shared Memories
-          </h3>
-          <p className="text-xl font-medium text-white">3 new memories added to Goa Trip</p>
-          <button className="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-sm font-medium transition-colors">
-            View Memories
-          </button>
-        </GlassPanel>
-
-      </div>
-
-      {/* Secondary Dashboard Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <GlassPanel className="p-4 flex flex-col items-center justify-center text-center">
-          <Heart className="w-8 h-8 text-[#00E5FF] mb-2" />
-          <p className="text-2xl font-bold text-white">12</p>
-          <p className="text-xs text-white/50 uppercase tracking-wider">Relationship Milestones</p>
-        </GlassPanel>
-
-        <GlassPanel className="p-4 flex flex-col items-center justify-center text-center">
-          <CalendarDays className="w-8 h-8 text-[#FF4D8D] mb-2" />
-          <p className="text-2xl font-bold text-white">2</p>
-          <p className="text-xs text-white/50 uppercase tracking-wider">Upcoming Events</p>
-        </GlassPanel>
-
-        <GlassPanel className="p-4 flex flex-col items-center justify-center text-center">
-          <Star className="w-8 h-8 text-[#FACC15] mb-2" />
-          <p className="text-2xl font-bold text-white">5</p>
-          <p className="text-xs text-white/50 uppercase tracking-wider">Community Highlights</p>
-        </GlassPanel>
-      </div>
-
-      {/* Continue Your Story (Memory Re-engagement) */}
-      <div className="pt-4">
-        <h2 className="text-xl font-bold flex items-center gap-2 text-white mb-4">
-          <Archive className="text-[#8B5CF6]" /> Continue Your Story
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
-          {/* Card 1 */}
-          <GlassPanel className="p-5 hover:-translate-y-1 transition-transform cursor-pointer group">
-            <h3 className="font-bold text-white text-lg mb-1">You and Dad</h3>
-            <p className="text-sm text-[#00E5FF] font-medium mb-3">243 memories</p>
-            <p className="text-xs text-white/40 group-hover:text-white/60 transition-colors">Last viewed 3 days ago</p>
-          </GlassPanel>
-
-          {/* Card 2 */}
-          <GlassPanel className="p-5 hover:-translate-y-1 transition-transform cursor-pointer group">
-            <h3 className="font-bold text-white text-lg mb-1">Family Goa Trip</h3>
-            <p className="text-sm text-[#FF4D8D] font-medium mb-3">42 memories</p>
-            <p className="text-xs text-white/40 group-hover:text-white/60 transition-colors">New memory added yesterday</p>
-          </GlassPanel>
-
-          {/* Card 3 */}
-          <GlassPanel className="p-5 hover:-translate-y-1 transition-transform cursor-pointer group">
-            <h3 className="font-bold text-white text-lg mb-1">Wedding Circle</h3>
-            <p className="text-sm text-[#FACC15] font-medium mb-3">187 memories</p>
-            <p className="text-xs text-white/40 group-hover:text-white/60 transition-colors">12 year anniversary in 18 days</p>
-          </GlassPanel>
-
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-3 text-white/50">
+          <Loader2 className="w-8 h-8 animate-spin text-[#00E5FF]" />
+          <p className="text-sm font-medium">Loading your relationship dashboard...</p>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Relationship Dashboard Highlights */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Birthdays Card */}
+            <GlassPanel className="p-6 relative overflow-hidden group hover:shadow-[0_0_30px_rgba(255,77,141,0.15)] transition-shadow">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Cake size={80} />
+              </div>
+              <h3 className="text-[#FF4D8D] font-bold flex items-center gap-2 mb-3 text-sm tracking-wider uppercase">
+                <Cake size={16} /> Family Updates & Birthdays
+              </h3>
+              {upcomingBirthdays.length > 0 ? (
+                <div className="space-y-2">
+                  {upcomingBirthdays.map((b, idx) => (
+                    <div key={idx}>
+                      <p className="text-lg font-bold text-white">{b.name}'s Birthday</p>
+                      <p className="text-xs text-white/50 capitalize">
+                        {b.relationship} • {b.daysLeft === 0 ? "Today" : b.daysLeft === 1 ? "Tomorrow" : `in ${b.daysLeft} days`} ({b.dateStr})
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div>
+                  <p className="text-lg font-bold text-white">No upcoming birthdays</p>
+                  <p className="text-xs text-white/50">Add birthdays in the Family Graph page to track them.</p>
+                </div>
+              )}
+              <Link href="/dapp/family-graph" className="mt-5 inline-block px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-xs font-bold transition-colors">
+                View Family Graph
+              </Link>
+            </GlassPanel>
 
-      {/* Discovery Section (Former Feed) */}
-      <div className="pt-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold flex items-center gap-2 text-white">
-            <Sparkles className="text-[#00E5FF]" /> Discovery
-          </h2>
-          <button className="text-sm text-[#00E5FF] hover:underline">View All</button>
-        </div>
-        
-        <GlassPanel className="p-8 text-center text-white/40">
-          <p>Discover new communities, events, and people.</p>
-          <button className="mt-4 px-6 py-2 bg-gradient-to-r from-[#8B5CF6] to-[#00E5FF] text-white rounded-full font-bold shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow">
-            Start Exploring
-          </button>
-        </GlassPanel>
-      </div>
+            {/* Shared Memories Card */}
+            <GlassPanel className="p-6 relative overflow-hidden group hover:shadow-[0_0_30px_rgba(139,92,246,0.15)] transition-shadow">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Share2 size={80} />
+              </div>
+              <h3 className="text-[#8B5CF6] font-bold flex items-center gap-2 mb-3 text-sm tracking-wider uppercase">
+                <Share2 size={16} /> Shared Memories
+              </h3>
+              {taggedMemories.length > 0 ? (
+                <div>
+                  <p className="text-lg font-bold text-white">{taggedMemories.length} memories shared with you</p>
+                  <p className="text-xs text-white/50">Latest: "{taggedMemories[0].title}" tagged by {taggedMemories[0].owner_name || 'family'}</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-lg font-bold text-white">No shared memories yet</p>
+                  <p className="text-xs text-white/50">When family members tag you, they will appear here.</p>
+                </div>
+              )}
+              <Link href="/dapp/memory-wallet" className="mt-5 inline-block px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-xs font-bold transition-colors">
+                Open Memory Wallet
+              </Link>
+            </GlassPanel>
+
+          </div>
+
+          {/* Secondary Dashboard Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <GlassPanel className="p-4 flex flex-col items-center justify-center text-center">
+              <Heart className="w-8 h-8 text-[#00E5FF] mb-2" />
+              <p className="text-2xl font-bold text-white">{stats.milestones}</p>
+              <p className="text-[10px] text-white/50 uppercase tracking-widest font-bold">Family Members</p>
+            </GlassPanel>
+
+            <GlassPanel className="p-4 flex flex-col items-center justify-center text-center">
+              <CalendarDays className="w-8 h-8 text-[#FF4D8D] mb-2" />
+              <p className="text-2xl font-bold text-white">{stats.upcomingEvents}</p>
+              <p className="text-[10px] text-white/50 uppercase tracking-widest font-bold">Upcoming Events</p>
+            </GlassPanel>
+
+            <GlassPanel className="p-4 flex flex-col items-center justify-center text-center">
+              <Star className="w-8 h-8 text-[#FACC15] mb-2" />
+              <p className="text-2xl font-bold text-white">{stats.communityHighlights}</p>
+              <p className="text-[10px] text-white/50 uppercase tracking-widest font-bold">Joined Communities</p>
+            </GlassPanel>
+          </div>
+
+          {/* Continue Your Story (Memory Re-engagement) */}
+          <div className="pt-4">
+            <h2 className="text-xl font-bold flex items-center gap-2 text-white mb-4">
+              <Archive className="text-[#8B5CF6]" /> Continue Your Story
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
+              {vaults.length > 0 ? (
+                vaults.map((vault) => (
+                  <Link href={`/dapp/memory-wallet?vault=${vault.id}`} key={vault.id}>
+                    <GlassPanel className="p-5 hover:-translate-y-1 transition-transform cursor-pointer group">
+                      <h3 className="font-bold text-white text-lg mb-1 truncate">{vault.name}</h3>
+                      <p className="text-sm text-[#00E5FF] font-medium mb-3">
+                        {vault.memory_count || 0} memories
+                      </p>
+                      <p className="text-[10px] text-white/40 group-hover:text-white/60 transition-colors uppercase tracking-wider font-bold">
+                        Role: {vault.role || 'Member'}
+                      </p>
+                    </GlassPanel>
+                  </Link>
+                ))
+              ) : (
+                <GlassPanel className="p-5 col-span-3 text-center text-white/40">
+                  No memory vaults created yet.
+                  <Link href="/dapp/memory-wallet" className="text-[#00E5FF] hover:underline block mt-2 font-bold">
+                    Create Your First Vault →
+                  </Link>
+                </GlassPanel>
+              )}
+
+            </div>
+          </div>
+
+          {/* Discovery Section */}
+          <div className="pt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-white">
+                <Sparkles className="text-[#00E5FF]" /> Discovery
+              </h2>
+            </div>
+            
+            <GlassPanel className="p-8 text-center text-white/40">
+              <p className="text-sm">Discover new communities, events, and family connections.</p>
+              <Link href="/dapp/communities" className="mt-4 inline-block px-6 py-2.5 bg-gradient-to-r from-[#8B5CF6] to-[#00E5FF] text-white rounded-full font-bold shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow text-xs">
+                Explore Communities & Events
+              </Link>
+            </GlassPanel>
+          </div>
+        </>
+      )}
 
     </div>
   );

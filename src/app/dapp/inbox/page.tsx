@@ -95,7 +95,13 @@ export default function InboxPage() {
       if (type === 'video') setIsRecordingVideo(true);
       
       timerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
+        setRecordingTime(prev => {
+           if (prev >= 59) {
+             stopRecording(false);
+             return 0;
+           }
+           return prev + 1;
+        });
       }, 1000);
       
     } catch (err) {
@@ -125,14 +131,26 @@ export default function InboxPage() {
   useEffect(() => {
     const init = async () => {
       try {
-        const [contactsRes, userRes, privacyRes] = await Promise.all([
+        const [contactsRes, userRes, privacyRes, commsRes] = await Promise.all([
           api.get('/messages/contacts'),
           api.get('/user/me'),
-          api.get('/messages/privacy').catch(() => ({ data: { message_privacy: 'everyone' } }))
+          api.get('/messages/privacy').catch(() => ({ data: { message_privacy: 'everyone' } })),
+          api.get('/communities/my').catch(() => ({ data: { data: [] } }))
         ]);
         
         let loadedContacts = contactsRes.data.data || [];
-        setContacts(loadedContacts);
+        
+        // Transform communities to match contact structure
+        const communities = (commsRes.data?.data || []).map((c: any) => ({
+           id: c.id,
+           name: c.name,
+           img: c.avatar_url,
+           isCommunity: true,
+           unread_count: 0,
+           latest_msg_time: new Date().toISOString()
+        }));
+
+        setContacts([...loadedContacts, ...communities]);
         setMsgPrivacy(privacyRes.data?.message_privacy || 'everyone');
         
         if (userRes.data?.auth?.sub) {
@@ -192,6 +210,23 @@ export default function InboxPage() {
       }
     });
 
+    newSocket.on("new_community_message", (msg) => {
+      // we only want to push to active message list if we're in that community chat
+      // but activeChat is stale in this closure. We can just push it and rely on React state
+      // Actually we should format the message to match the Direct Message schema somewhat so the UI works
+      setMessages(prev => {
+        if (prev.find(m => m.id === msg.id && m.community_id)) return prev;
+        const formattedMsg = {
+           ...msg,
+           sender_id: msg.user_id,
+           community_id: msg.community_id,
+           // map sender avatar / name so it renders nicely
+           isCommunity: true
+        };
+        return [...prev, formattedMsg];
+      });
+    });
+
     newSocket.on("messages_read", ({ readerId }) => {
       setMessages(prev => prev.map(m => 
         (m.receiver_id === readerId && m.sender_id === myUserId) ? { ...m, is_read: 1, read_at: new Date().toISOString() } : m
@@ -223,15 +258,24 @@ export default function InboxPage() {
 
   useEffect(() => {
     if (activeChat) {
-      api.get(`/messages/history/${activeChat.id}`).then(res => {
-        setMessages(res.data.data || []);
-        // Emit mark read
-        if (socket) {
-          socket.emit("mark_messages_read", { senderId: activeChat.id });
-        }
-      }).catch(() => {
-        toast.error("Failed to load history");
-      });
+      if (activeChat.isCommunity) {
+        if (socket) socket.emit("join_community_room", activeChat.id);
+        api.get(`/communities/${activeChat.id}/chat`).then(res => {
+          setMessages(res.data.data || []);
+        }).catch(() => {
+          toast.error("Failed to load community history");
+        });
+      } else {
+        api.get(`/messages/history/${activeChat.id}`).then(res => {
+          setMessages(res.data.data || []);
+          // Emit mark read
+          if (socket) {
+            socket.emit("mark_messages_read", { senderId: activeChat.id });
+          }
+        }).catch(() => {
+          toast.error("Failed to load history");
+        });
+      }
     }
   }, [activeChat, socket]);
 
@@ -256,12 +300,21 @@ export default function InboxPage() {
   const sendMessage = (mediaUrl: string | null = null, mediaType: string | null = null) => {
     if ((!inputValue.trim() && !mediaUrl) || !activeChat || !socket) return;
     
-    socket.emit("send_message", {
-      receiverId: activeChat.id,
-      content: inputValue,
-      mediaUrl,
-      mediaType
-    });
+    if (activeChat.isCommunity) {
+      socket.emit("send_community_message", {
+        communityId: activeChat.id,
+        content: inputValue,
+        mediaUrl,
+        mediaType
+      });
+    } else {
+      socket.emit("send_message", {
+        receiverId: activeChat.id,
+        content: inputValue,
+        mediaUrl,
+        mediaType
+      });
+    }
     setInputValue("");
   };
 
@@ -442,15 +495,22 @@ export default function InboxPage() {
                     const isMe = msg.sender_id === myUserId;
                     const isPrevMe = idx > 0 && activeMessages[idx-1].sender_id === msg.sender_id;
                     return (
-                      <div key={msg.id} className={`flex items-end gap-2 max-w-[85%] md:max-w-[70%] ${isMe ? 'self-end flex-row-reverse' : ''} ${isPrevMe ? 'mt-1' : 'mt-4'} relative group`}>
+                      <div key={msg.id} className={`flex items-end gap-2 w-fit max-w-[85%] md:max-w-[70%] ${isMe ? 'self-end flex-row-reverse' : ''} ${isPrevMe ? 'mt-1' : 'mt-4'} relative group`}>
                         {!isMe && (
                           <div className={`w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-[#8B5CF6] flex items-center justify-center text-white text-xs font-bold shrink-0 overflow-hidden ${isPrevMe ? 'invisible' : ''}`}>
-                            {activeChat.img ? <img src={getMediaUrl(activeChat.img)} className="w-full h-full object-cover" /> : activeChat.name?.[0].toUpperCase()}
+                            {(activeChat.isCommunity ? msg.sender_avatar : activeChat.img) ? (
+                               <img src={getMediaUrl(activeChat.isCommunity ? msg.sender_avatar : activeChat.img)} className="w-full h-full object-cover" />
+                            ) : (
+                               (activeChat.isCommunity ? msg.sender_name?.[0] : activeChat.name?.[0])?.toUpperCase() || 'U'
+                            )}
                           </div>
                         )}
-                        <div className="flex flex-col relative">
+                        <div className="flex flex-col relative max-w-full">
+                          {activeChat.isCommunity && !isMe && !isPrevMe && (
+                             <span className="text-[11px] font-bold text-primary ml-1 mb-0.5">{msg.sender_name}</span>
+                          )}
                           <div 
-                            className={`relative text-[15px] leading-relaxed shadow-sm min-w-[80px] group-hover:shadow-md transition-shadow
+                            className={`relative text-[15px] leading-relaxed shadow-sm min-w-[80px] max-w-full group-hover:shadow-md transition-shadow break-words
                               ${msg.is_unsent ? 'bg-surface border border-border/50 text-foreground/50 italic rounded-2xl' : 
                                 isMe ? 'bg-[#005c4b] text-[#e9edef] rounded-2xl rounded-tr-sm' : 'bg-[#202c33] text-[#e9edef] rounded-2xl rounded-tl-sm'
                               }`}
@@ -467,20 +527,20 @@ export default function InboxPage() {
                             )}
 
                             {msg.media_url && (
-                              <div className="relative mb-1 rounded-lg overflow-hidden max-w-[280px]">
+                              <div className={`relative mb-1 overflow-hidden ${msg.media_url.includes('recording.webm') || msg.media_type === 'video' ? 'rounded-full w-64 h-64 border-4 border-surface shadow-lg mx-auto flex items-center justify-center bg-black' : 'rounded-xl max-w-[280px]'}`}>
                                 {msg.media_type === 'video' ? (
-                                  <video src={getMediaUrl(msg.media_url)} controls className="w-full max-h-[300px] bg-black" />
+                                  <video src={getMediaUrl(msg.media_url)} controls controlsList="nodownload" className={`w-full h-full ${msg.media_url.includes('recording.webm') ? 'object-cover scale-[1.3]' : 'object-contain bg-black'}`} />
                                 ) : msg.media_type === 'audio' ? (
                                   <audio src={getMediaUrl(msg.media_url)} controls className="w-[240px] h-[40px] mt-1 mb-1 custom-audio" />
                                 ) : (
                                   <img src={getMediaUrl(msg.media_url)} className="w-full h-auto object-cover max-h-[300px]" />
                                 )}
                                 {/* Overlay timestamp if only media */}
-                                {!msg.content && (
-                                  <div className="absolute bottom-1 right-1 flex items-center gap-1 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded-full z-10">
-                                    <span className="text-[10px] text-white/90 font-medium tracking-wide">{formatTime(msg.created_at)}</span>
+                                {!msg.content && msg.media_type !== 'audio' && (
+                                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full z-10">
+                                    <span className="text-[10px] text-white font-medium tracking-wide">{formatTime(msg.created_at)}</span>
                                     {isMe && !msg.is_unsent && (
-                                      <span className="shrink-0 flex items-center">
+                                      <span className="shrink-0 flex items-center ml-1">
                                         {msg.is_read ? <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb] stroke-[2.5]" /> : msg.delivered_at ? <CheckCheck className="w-3.5 h-3.5 text-white/70 stroke-[2.5]" /> : <Check className="w-3.5 h-3.5 text-white/70 stroke-[2.5]" />}
                                       </span>
                                     )}
@@ -607,9 +667,22 @@ export default function InboxPage() {
 
                 <div className="flex flex-col">
                   {isRecordingVideo && (
-                     <div className="mb-2 rounded-xl overflow-hidden border border-border/50 bg-black max-w-[200px] relative shadow-lg">
-                        <video ref={videoPreviewRef} autoPlay muted playsInline className="w-full h-auto object-cover" style={{ transform: 'scaleX(-1)' }} />
-                        <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">REC {formatRecTime(recordingTime)}</div>
+                     <div className="absolute bottom-full right-4 mb-4 z-50">
+                       <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-primary/50 shadow-2xl bg-black">
+                         <video ref={videoPreviewRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
+                         
+                         {/* Progress Ring */}
+                         <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none">
+                            <circle cx="96" cy="96" r="92" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="8" />
+                            <circle cx="96" cy="96" r="92" fill="none" stroke="#FF4D8D" strokeWidth="8" strokeDasharray="578" strokeDashoffset={578 - (578 * recordingTime) / 60} className="transition-all duration-1000 linear" />
+                         </svg>
+
+                         {/* Recording Indicator */}
+                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2 border border-white/10">
+                           <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                           <span className="text-white font-mono text-xs font-bold">{formatRecTime(recordingTime)} / 1:00</span>
+                         </div>
+                       </div>
                      </div>
                   )}
                   <div className="flex items-end gap-2 bg-surface-secondary border border-border/50 rounded-[24px] px-4 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all shadow-inner relative">

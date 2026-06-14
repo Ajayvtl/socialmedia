@@ -21,6 +21,7 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   const [socialProfile, setSocialProfile] = useState<any>(null);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     setIsMobileNavOpen(false);
@@ -39,7 +40,7 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
     { key: "events", href: "/dapp/events", label: "Events", icon: Calendar, badge: 0 },
     { key: "family", href: "/dapp/family-graph", label: "Family Graph", icon: GitMerge, badge: 0 },
     { key: "memory", href: "/dapp/memory-wallet", label: "Memory Wallet", icon: Archive, badge: 0 },
-    { key: "messages", href: "/dapp/inbox", label: "Messages", icon: MessageCircle, badge: 18 },
+    { key: "messages", href: "/dapp/inbox", label: "Messages", icon: MessageCircle, badge: unreadCount },
     { key: "avatar", href: "/dapp/avatar", label: "Avatar Studio", icon: Sparkles, badge: 0 },
     { key: "wallet", href: "/dapp/wallet", label: "Wallet", icon: Wallet, badge: 0 },
     { key: "creator", href: "/dapp/creator", label: "Creator Hub", icon: Trophy, badge: 0 },
@@ -61,10 +62,17 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
         .then(res => {
           if (res.data?.data) {
             setSocialProfile(res.data.data);
-            // Optionally update user context or localStorage if needed
           }
         })
-        .catch(console.error);
+        .catch(err => console.error("Failed to load profile", err));
+
+      api.get("/messages/unread")
+        .then(res => {
+          if (res.data?.unread !== undefined) {
+             setUnreadCount(res.data.unread);
+          }
+        })
+        .catch(err => console.error("Failed to load unread messages count", err));
     }
   }, [mounted, token, pathname, isPublicDappPage, router]);
 

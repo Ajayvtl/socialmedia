@@ -438,7 +438,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                 setSettings(prev => ({
                     ...prev,
                     ...data,
-                    logo: data.logo ? (data.logo.startsWith('http') ? data.logo : `${process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:5000'}${data.logo}`) : prev.logo,
+                    logo: data.logo || prev.logo,
                     // Ensure defaults if API returns null/undefined
                     currency: data.currency || prev.currency,
                     language: data.language || prev.language

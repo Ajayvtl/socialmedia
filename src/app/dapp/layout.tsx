@@ -126,7 +126,7 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
             <Link href="/dapp/feed" className="flex items-center gap-3">
                <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center font-black shadow-lg overflow-hidden shrink-0">
                  {settings?.logo ? (
-                   <img src={settings.logo} className="w-full h-full object-cover" alt="Brand Logo" />
+                   <img src={getMediaUrl(settings.logo)} className="w-full h-full object-cover" alt="Brand Logo" />
                  ) : (
                    <span className="text-xl bg-gradient-to-tr from-[#00E5FF] to-[#8B5CF6] text-transparent bg-clip-text">
                      {settings?.brand_name?.charAt(0) || "A"}

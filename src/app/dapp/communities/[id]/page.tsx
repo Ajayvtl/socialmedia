@@ -16,6 +16,7 @@ import { getCroppedImg } from "@/lib/cropImage";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import InviteModal from "@/components/communities/InviteModal";
 import CreateEventModal from "@/components/events/CreateEventModal";
+import EventCard from "@/components/events/EventCard";
 import { Calendar } from "lucide-react";
 
 export default function CommunityDetailsPage() {
@@ -25,6 +26,8 @@ export default function CommunityDetailsPage() {
   const [community, setCommunity] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'feed' | 'events'>('feed');
   const [isLoading, setIsLoading] = useState(true);
   
   const [showQR, setShowQR] = useState(false);
@@ -51,14 +54,16 @@ export default function CommunityDetailsPage() {
 
   const fetchCommunityData = async () => {
     try {
-      const [cRes, mRes, pRes] = await Promise.all([
+      const [cRes, mRes, pRes, eRes] = await Promise.all([
         api.get(`/communities/${id}`),
         api.get(`/communities/${id}/members`),
-        api.get(`/posts/community/${id}`)
+        api.get(`/posts/community/${id}`),
+        api.get(`/events?community_id=${id}`)
       ]);
       setCommunity(cRes.data.data);
       setMembers(mRes.data.data);
       setPosts(pRes.data.data || []);
+      setEvents(eRes.data.data || []);
       
       const cData = cRes.data.data;
       setEditForm({
@@ -486,7 +491,25 @@ export default function CommunityDetailsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Feed Column */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Composer */}
+          {/* Tabs */}
+          <div className="flex gap-4 border-b border-border mb-6">
+            <button 
+              onClick={() => setActiveTab('feed')}
+              className={`pb-3 px-4 font-bold transition-colors border-b-2 ${activeTab === 'feed' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
+            >
+              Feed
+            </button>
+            <button 
+              onClick={() => setActiveTab('events')}
+              className={`pb-3 px-4 font-bold transition-colors border-b-2 flex items-center gap-2 ${activeTab === 'events' ? 'border-primary text-primary' : 'border-transparent text-foreground/60 hover:text-foreground'}`}
+            >
+              Events {events.length > 0 && <span className="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full">{events.length}</span>}
+            </button>
+          </div>
+
+          {activeTab === 'feed' ? (
+            <>
+              {/* Composer */}
           {isMember ? (
             <GlassPanel className="p-4">
               <div className="flex gap-4">
@@ -543,11 +566,64 @@ export default function CommunityDetailsPage() {
                       <p className="text-xs text-foreground/50">{new Date(post.created_at).toLocaleString()}</p>
                     </div>
                   </div>
-                  <p className="text-foreground/90 whitespace-pre-wrap">{post.content}</p>
+                  {post.media_type === 'event' ? (() => {
+                    try {
+                      const parsed = JSON.parse(post.content);
+                      return (
+                        <div className="bg-surface-secondary/50 border border-primary/30 rounded-xl overflow-hidden mt-3 mb-2 hover:border-primary/60 transition-all cursor-pointer shadow-sm group relative" onClick={() => window.location.href = `/dapp/events/${parsed.event_id}`}>
+                          {parsed.cover_image ? (
+                            <img src={getMediaUrl(parsed.cover_image)} alt={parsed.title} className="w-full h-32 object-cover opacity-80 group-hover:opacity-100 transition-all duration-500 group-hover:scale-105" />
+                          ) : (
+                            <div className="w-full h-32 bg-gradient-to-br from-surface to-surface-secondary flex items-center justify-center">
+                              <Calendar className="w-8 h-8 text-primary/40 group-hover:text-primary/80 transition-colors" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent pointer-events-none"></div>
+                          <div className="absolute bottom-0 left-0 right-0 p-4 z-10 pointer-events-none">
+                            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-primary/20 text-primary border border-primary/30 text-[10px] font-bold uppercase tracking-wide mb-1 backdrop-blur-md">
+                              <Calendar className="w-3 h-3" /> Event Invite
+                            </div>
+                            <h4 className="text-lg font-bold text-foreground leading-tight mb-1">{parsed.title}</h4>
+                            <p className="text-xs text-foreground/70 font-medium">
+                              Starts: {new Date(parsed.start_time).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    } catch (e) {
+                      return <p className="text-foreground/90 whitespace-pre-wrap">{post.content}</p>;
+                    }
+                  })() : (
+                    <p className="text-foreground/90 whitespace-pre-wrap">{post.content}</p>
+                  )}
                 </GlassPanel>
               ))
             )}
           </div>
+            </>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-lg text-foreground px-2">Community Events</h3>
+                {isMember && (
+                  <GlowButton variant="primary" onClick={() => setShowCreateEventModal(true)} className="py-1.5 text-sm">
+                    Host Event
+                  </GlowButton>
+                )}
+              </div>
+              {events.length === 0 ? (
+                <div className="p-8 text-center text-foreground/60 bg-surface-secondary/50 rounded-2xl border border-border">
+                  No upcoming events.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {events.map((event: any) => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}

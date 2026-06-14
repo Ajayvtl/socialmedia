@@ -24,6 +24,7 @@ export default function CreateEventModal({ onClose, onSuccess, communityId }: Pr
     description: '',
     event_type: 'VIRTUAL',
     location: '',
+    visibility: 'PUBLIC',
     cover_image: '',
     start_date: '',
     start_time: '',
@@ -275,6 +276,24 @@ export default function CreateEventModal({ onClose, onSuccess, communityId }: Pr
                   placeholder="Leave blank for unlimited"
                   className="w-full bg-surface border border-border/50 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary transition-colors"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-foreground/80 mb-2">Event Visibility</label>
+                <div className="flex items-center gap-3 mb-4">
+                  <button 
+                    onClick={() => setFormData({...formData, visibility: 'PUBLIC'})}
+                    className={`flex-1 py-2 rounded-xl border text-sm font-bold transition-all ${formData.visibility === 'PUBLIC' ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border/50 text-foreground/60 hover:border-border'}`}
+                  >
+                    Public
+                  </button>
+                  <button 
+                    onClick={() => setFormData({...formData, visibility: 'PRIVATE'})}
+                    className={`flex-1 py-2 rounded-xl border text-sm font-bold transition-all ${formData.visibility === 'PRIVATE' ? 'bg-primary/10 border-primary text-primary' : 'bg-surface border-border/50 text-foreground/60 hover:border-border'}`}
+                  >
+                    Private (Members Only)
+                  </button>
+                </div>
               </div>
 
               <div>

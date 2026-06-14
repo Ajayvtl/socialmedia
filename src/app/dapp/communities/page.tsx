@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api";
+import api, { getMediaUrl } from "@/lib/api";
 import { safeArray } from "@/lib/utils";
 import { normalizeCommunityTaxonomy, buildCommunityTagHints, type CommunityTopicCategory, type CommunityTopicSubcategory, type CommunityTopicTaxonomy, getCommunityMapEmbedUrl } from "@/lib/communityTopics";
 import { IconMap } from "@/lib/iconMapping";

@@ -16,6 +16,7 @@ export default function InboxPage() {
   const [activeChat, setActiveChat] = useState<any>(null);
   const [contacts, setContacts] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
+  const [filterType, setFilterType] = useState<'all' | 'direct' | 'community' | 'event'>('all');
   const [inputValue, setInputValue] = useState("");
   const [socket, setSocket] = useState<Socket | null>(null);
   const [myUserId, setMyUserId] = useState<number | null>(null);
@@ -131,26 +132,37 @@ export default function InboxPage() {
   useEffect(() => {
     const init = async () => {
       try {
-        const [contactsRes, userRes, privacyRes, commsRes] = await Promise.all([
+        const [contactsRes, userRes, privacyRes, commsRes, eventsRes] = await Promise.all([
           api.get('/messages/contacts'),
           api.get('/user/me'),
           api.get('/messages/privacy').catch(() => ({ data: { message_privacy: 'everyone' } })),
-          api.get('/communities/my').catch(() => ({ data: { data: [] } }))
+          api.get('/communities/my').catch(() => ({ data: { data: [] } })),
+          api.get('/events').catch(() => ({ data: { data: [] } }))
         ]);
         
         let loadedContacts = contactsRes.data.data || [];
         
-        // Transform communities to match contact structure
+        // Transform communities
         const communities = (commsRes.data?.data || []).map((c: any) => ({
            id: c.id,
            name: c.name,
            img: c.avatar_url,
            isCommunity: true,
            unread_count: 0,
-           latest_msg_time: new Date().toISOString()
+           latest_msg_time: new Date(c.created_at || Date.now()).toISOString()
         }));
 
-        setContacts([...loadedContacts, ...communities]);
+        // Transform events
+        const events = (eventsRes.data?.data || []).map((e: any) => ({
+           id: e.id,
+           name: e.title,
+           img: e.cover_image,
+           isEvent: true,
+           unread_count: 0,
+           latest_msg_time: new Date(e.created_at || Date.now()).toISOString()
+        }));
+
+        setContacts([...loadedContacts, ...communities, ...events]);
         setMsgPrivacy(privacyRes.data?.message_privacy || 'everyone');
         
         if (userRes.data?.auth?.sub) {
@@ -211,17 +223,26 @@ export default function InboxPage() {
     });
 
     newSocket.on("new_community_message", (msg) => {
-      // we only want to push to active message list if we're in that community chat
-      // but activeChat is stale in this closure. We can just push it and rely on React state
-      // Actually we should format the message to match the Direct Message schema somewhat so the UI works
       setMessages(prev => {
         if (prev.find(m => m.id === msg.id && m.community_id)) return prev;
         const formattedMsg = {
            ...msg,
            sender_id: msg.user_id,
            community_id: msg.community_id,
-           // map sender avatar / name so it renders nicely
            isCommunity: true
+        };
+        return [...prev, formattedMsg];
+      });
+    });
+
+    newSocket.on("new_event_message", (msg) => {
+      setMessages(prev => {
+        if (prev.find(m => m.id === msg.id && m.event_id)) return prev;
+        const formattedMsg = {
+           ...msg,
+           sender_id: msg.user_id,
+           event_id: msg.event_id,
+           isEvent: true
         };
         return [...prev, formattedMsg];
       });
@@ -265,6 +286,13 @@ export default function InboxPage() {
         }).catch(() => {
           toast.error("Failed to load community history");
         });
+      } else if (activeChat.isEvent) {
+        if (socket) socket.emit("join_event_room", activeChat.id);
+        api.get(`/events/${activeChat.id}/chat`).then(res => {
+          setMessages(res.data.data || []);
+        }).catch(() => {
+          toast.error("Failed to load event history");
+        });
       } else {
         api.get(`/messages/history/${activeChat.id}`).then(res => {
           setMessages(res.data.data || []);
@@ -303,6 +331,13 @@ export default function InboxPage() {
     if (activeChat.isCommunity) {
       socket.emit("send_community_message", {
         communityId: activeChat.id,
+        content: inputValue,
+        mediaUrl,
+        mediaType
+      });
+    } else if (activeChat.isEvent) {
+      socket.emit("send_event_message", {
+        eventId: activeChat.id,
         content: inputValue,
         mediaUrl,
         mediaType
@@ -377,10 +412,16 @@ export default function InboxPage() {
     });
   };
 
-  const activeMessages = messages.filter(m => 
-    (m.sender_id === myUserId && m.receiver_id === activeChat?.id) ||
-    (m.sender_id === activeChat?.id && m.receiver_id === myUserId)
-  );
+  const activeMessages = messages.filter(m => {
+    if (activeChat?.isCommunity) {
+      return m.community_id === activeChat.id;
+    }
+    if (activeChat?.isEvent) {
+      return m.event_id === activeChat.id;
+    }
+    return (m.sender_id === myUserId && m.receiver_id === activeChat?.id) ||
+           (m.sender_id === activeChat?.id && m.receiver_id === myUserId);
+  });
 
   return (
     <div className="p-0 md:p-8 max-w-7xl mx-auto h-[calc(100dvh-64px)] md:h-[calc(100vh-80px)] flex flex-col md:space-y-4">
@@ -419,15 +460,23 @@ export default function InboxPage() {
                 className="w-full bg-surface border border-border/50 rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors text-foreground placeholder:text-foreground/50"
               />
             </div>
+            
+            {/* Horizontal Filter Tabs */}
+            <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-1 mt-2">
+               <button onClick={() => setFilterType('all')} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors ${filterType === 'all' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-surface border border-border/50 text-foreground/70 hover:text-foreground hover:bg-surface-secondary'}`}>All</button>
+               <button onClick={() => setFilterType('direct')} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors ${filterType === 'direct' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-surface border border-border/50 text-foreground/70 hover:text-foreground hover:bg-surface-secondary'}`}>Inbox</button>
+               <button onClick={() => setFilterType('community')} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors ${filterType === 'community' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-surface border border-border/50 text-foreground/70 hover:text-foreground hover:bg-surface-secondary'}`}>Communities</button>
+               <button onClick={() => setFilterType('event')} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors ${filterType === 'event' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-surface border border-border/50 text-foreground/70 hover:text-foreground hover:bg-surface-secondary'}`}>Events</button>
+            </div>
           </div>
           
           <div className="flex-1 overflow-y-auto hide-scrollbar">
             {isLoading ? (
               <div className="flex justify-center p-10"><Loader2 className="w-6 h-6 animate-spin text-primary"/></div>
-            ) : contacts.length === 0 ? (
+            ) : contacts.filter(c => filterType === 'all' ? true : filterType === 'direct' ? (!c.isCommunity && !c.isEvent) : filterType === 'community' ? c.isCommunity : filterType === 'event' ? c.isEvent : false).length === 0 ? (
               <div className="text-center p-10 text-foreground/40 text-sm">No conversations yet</div>
             ) : (
-              contacts.map((contact) => (
+              contacts.filter(c => filterType === 'all' ? true : filterType === 'direct' ? (!c.isCommunity && !c.isEvent) : filterType === 'community' ? c.isCommunity : filterType === 'event' ? c.isEvent : false).map((contact) => (
                 <div 
                   key={contact.id}
                   onClick={() => setActiveChat(contact)}

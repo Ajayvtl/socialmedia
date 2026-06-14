@@ -31,21 +31,14 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
   const hideNav = isPublicDappPage || pathname === "/dapp/onboarding";
   const showNav = !hideNav;
 
-  // Social Navigation (Matching the Image)
+  // Final Aurora Navigation Architecture
   const navItems = [
-    { key: "home", href: "/dapp/feed", label: "Home", icon: Home, badge: 0 },
-    { key: "discover", href: "/dapp/search", label: "Discover", icon: Compass, badge: 0 },
+    { key: "home", href: "/dapp/home", label: "Home", icon: Home, badge: 0 },
+    { key: "relationships", href: "/dapp/relationships", label: "Relationships", icon: Heart, badge: 0 },
+    { key: "memories", href: "/dapp/memories", label: "Memories", icon: Archive, badge: 0 },
     { key: "communities", href: "/dapp/communities", label: "Communities", icon: Users, badge: 0 },
-    { key: "dating", href: "/dapp/dating", label: "Dating", icon: Heart, badge: 0 },
-    { key: "events", href: "/dapp/events", label: "Events", icon: Calendar, badge: 0 },
-    { key: "family", href: "/dapp/family-graph", label: "Family Graph", icon: GitMerge, badge: 0 },
-    { key: "memory", href: "/dapp/memory-wallet", label: "Memory Wallet", icon: Archive, badge: 0 },
     { key: "messages", href: "/dapp/inbox", label: "Messages", icon: MessageCircle, badge: unreadCount },
-    { key: "avatar", href: "/dapp/avatar", label: "Avatar Studio", icon: Sparkles, badge: 0 },
-    { key: "wallet", href: "/dapp/wallet", label: "Wallet", icon: Wallet, badge: 0 },
-    { key: "creator", href: "/dapp/creator", label: "Creator Hub", icon: Trophy, badge: 0 },
-    { key: "business", href: "/dapp/business", label: "Business Pages", icon: Briefcase, badge: 0 },
-    { key: "saved", href: "/dapp/saved", label: "Saved", icon: Bookmark, badge: 0 },
+    { key: "marketplace", href: "/dapp/marketplace", label: "Marketplace (Beta)", icon: Briefcase, badge: 0 },
     { key: "more", href: "#", label: "More", icon: MoreHorizontal, badge: 0 },
   ];
 
@@ -123,7 +116,7 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
           
           {/* Logo & Close */}
           <div className="flex items-center justify-between px-6 py-8">
-            <Link href="/dapp/feed" className="flex items-center gap-3">
+            <Link href="/dapp/home" className="flex items-center gap-3">
                <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center font-black shadow-lg overflow-hidden shrink-0">
                  {settings?.logo ? (
                    <img src={getMediaUrl(settings.logo)} className="w-full h-full object-cover" alt="Brand Logo" />
@@ -230,37 +223,42 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
       {showNav && (
         <div className="xl:hidden fixed bottom-0 left-0 w-full z-50 pb-[env(safe-area-inset-bottom)]">
           <div className="bg-[#050816]/95 backdrop-blur-[24px] border-t border-white/[0.08] h-[72px] flex items-center justify-around px-2 shadow-[0_-8px_32px_rgba(0,0,0,0.5)]">
-            <Link href="/dapp/feed" className="flex flex-col items-center justify-center p-2 group w-16">
-              <Home className="w-6 h-6 text-[#00E5FF] transition-transform group-hover:scale-110" />
-              <span className="text-[10px] text-[#00E5FF] font-medium mt-1">Home</span>
+            <Link href="/dapp/home" className="flex flex-col items-center justify-center p-2 group w-16">
+              <Home className={`w-6 h-6 transition-transform group-hover:scale-110 ${pathname.includes('/dapp/home') ? 'text-[#00E5FF]' : 'text-white/50'}`} />
+              <span className={`text-[10px] font-medium mt-1 ${pathname.includes('/dapp/home') ? 'text-[#00E5FF]' : 'text-white/50'}`}>Home</span>
             </Link>
-            <Link href="/dapp/search" className="flex flex-col items-center justify-center p-2 group w-16">
-              <Search className="w-6 h-6 text-white/50 transition-transform group-hover:scale-110" />
-              <span className="text-[10px] text-white/50 font-medium mt-1 group-hover:text-white">Discover</span>
+            <Link href="/dapp/relationships" className="flex flex-col items-center justify-center p-2 group w-16">
+              <Heart className={`w-6 h-6 transition-transform group-hover:scale-110 ${pathname.includes('/dapp/relationships') ? 'text-[#00E5FF]' : 'text-white/50'}`} />
+              <span className={`text-[10px] font-medium mt-1 ${pathname.includes('/dapp/relationships') ? 'text-[#00E5FF]' : 'text-white/50'}`}>Family</span>
             </Link>
-            <Link href="/dapp/avatar" className="relative -top-5 group flex flex-col items-center w-16">
+            
+            {/* Create Action Drawer Trigger */}
+            <button className="relative -top-5 group flex flex-col items-center w-16 cursor-pointer">
               <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#8B5CF6] to-[#00E5FF] p-[2px] shadow-[0_0_20px_rgba(139,92,246,0.6)] group-hover:scale-105 transition-transform">
                 <div className="w-full h-full bg-[#050816] rounded-full flex items-center justify-center">
                   <Plus className="w-6 h-6 text-white" />
                 </div>
               </div>
-            </Link>
+            </button>
+            
             <Link href="/dapp/inbox" className="flex flex-col items-center justify-center p-2 group relative w-16">
               <div className="relative">
-                <MessageCircle className="w-6 h-6 text-white/50 transition-transform group-hover:scale-110" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#FF4D8D] rounded-full border border-[#050816]"></span>
+                <MessageCircle className={`w-6 h-6 transition-transform group-hover:scale-110 ${pathname.includes('/dapp/inbox') ? 'text-[#00E5FF]' : 'text-white/50'}`} />
+                {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-3 h-3 bg-[#FF4D8D] rounded-full border border-[#050816]"></span>}
               </div>
-              <span className="text-[10px] text-white/50 font-medium mt-1 group-hover:text-white">Messages</span>
+              <span className={`text-[10px] font-medium mt-1 ${pathname.includes('/dapp/inbox') ? 'text-[#00E5FF]' : 'text-white/50'}`}>Messages</span>
             </Link>
+            
+            {/* Profile Tab triggering Slide-out Drawer */}
             <Link href="/dapp/profile" className="flex flex-col items-center justify-center p-2 group w-16">
               {socialProfile?.avatar_url ? (
-                <img src={getMediaUrl(socialProfile.avatar_url)} className="w-6 h-6 rounded-full border border-white/20 transition-transform group-hover:scale-110 object-cover" />
+                <img src={getMediaUrl(socialProfile.avatar_url)} className={`w-6 h-6 rounded-full border transition-transform group-hover:scale-110 object-cover ${pathname.includes('/dapp/profile') ? 'border-[#00E5FF]' : 'border-white/20'}`} />
               ) : (
-                <div className="w-6 h-6 rounded-full border border-white/20 transition-transform group-hover:scale-110 bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-[10px]">
+                <div className={`w-6 h-6 rounded-full border transition-transform group-hover:scale-110 bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-[10px] ${pathname.includes('/dapp/profile') ? 'border-[#00E5FF]' : 'border-white/20'}`}>
                   {(socialProfile?.display_name || socialProfile?.username || 'U')[0].toUpperCase()}
                 </div>
               )}
-              <span className="text-[10px] text-white/50 font-medium mt-1 group-hover:text-white">Profile</span>
+              <span className={`text-[10px] font-medium mt-1 ${pathname.includes('/dapp/profile') ? 'text-[#00E5FF]' : 'text-white/50'}`}>Profile</span>
             </Link>
           </div>
         </div>

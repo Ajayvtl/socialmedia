@@ -6,6 +6,7 @@ import api, { getMediaUrl } from '@/lib/api';
 import toast from 'react-hot-toast';
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
 import { getCroppedImg } from '@/lib/cropImage';
+import { useSettings } from '@/context/SettingsContext';
 
 interface Props {
   onClose: () => void;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function CreateEventModal({ onClose, onSuccess, communityId }: Props) {
+  const { settings } = useSettings();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -30,7 +32,7 @@ export default function CreateEventModal({ onClose, onSuccess, communityId }: Pr
     max_attendees: '',
     ticket_type: 'FREE',
     ticket_price: '',
-    currency: 'USD'
+    currency: settings?.currency || 'INR'
   });
 
   const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
@@ -305,9 +307,11 @@ export default function CreateEventModal({ onClose, onSuccess, communityId }: Pr
                       onChange={e => setFormData({...formData, currency: e.target.value})}
                       className="w-24 bg-surface border border-border/50 rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary transition-colors appearance-none"
                     >
+                      <option value="INR">INR</option>
                       <option value="USD">USD</option>
                       <option value="EUR">EUR</option>
                       <option value="GBP">GBP</option>
+                      <option value="AED">AED</option>
                     </select>
                   </div>
                 )}

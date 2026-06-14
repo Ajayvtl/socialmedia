@@ -113,7 +113,9 @@ if (typeof window !== 'undefined') {
 
 export const getMediaUrl = (url: string | null | undefined) => {
     if (!url) return '';
-    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api').replace('/api', '');
+    const baseUrl = typeof window !== 'undefined'
+        ? window.location.origin
+        : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api').replace('/api', '');
     
     let finalUrl = url;
     if (url.startsWith('http')) {

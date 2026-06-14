@@ -81,12 +81,12 @@ function categoryGradient(seed: string) {
 
 function renderCommunityIcon(icon: string | null | undefined, className = "w-5 h-5") {
   if (!icon) return "🌐";
-  if (String(icon).startsWith("http")) {
-    return null;
+  if (String(icon).startsWith("http") || String(icon).startsWith("/") || String(icon).includes("/uploads/")) {
+    return <img src={getMediaUrl(icon)} alt="Icon" className={`${className} object-contain inline-block`} />;
   }
   const IconComponent = IconMap[icon];
   if (IconComponent) return <IconComponent className={className} />;
-  return icon;
+  return <span className="text-lg leading-none">{icon}</span>;
 }
 
 function scoreSubcategory(subcategory: CommunityTopicSubcategory, profile: SocialProfile, age: number | null) {

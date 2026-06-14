@@ -38,6 +38,7 @@ export default function CommunityDetailsPage() {
   
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', description: '', rules: '', icon: '', slug: '', avatar_url: '', cover_url: '' });
+  const [customEmojis, setCustomEmojis] = useState<any[]>([]);
 
   const [cropperOpen, setCropperOpen] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
@@ -52,6 +53,14 @@ export default function CommunityDetailsPage() {
       fetchCommunityData();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (showEditModal) {
+      api.get("/emojis")
+        .then(res => setCustomEmojis(res.data?.data || []))
+        .catch(err => console.error("Failed to load custom emojis", err));
+    }
+  }, [showEditModal]);
 
   const fetchCommunityData = async () => {
     try {
@@ -207,10 +216,12 @@ export default function CommunityDetailsPage() {
   const mapEmbedUrl = getCommunityMapEmbedUrl(community.map_url, community.latitude, community.longitude);
   const renderCommunityIcon = (icon?: string | null) => {
     if (!icon) return "🌐";
-    if (String(icon).startsWith("http")) return null;
+    if (String(icon).startsWith("http") || String(icon).startsWith("/") || String(icon).includes("/uploads/")) {
+      return <img src={getMediaUrl(icon)} alt="Icon" className="w-8 h-8 object-contain inline-block" />;
+    }
     const IconComponent = IconMap[String(icon)];
     if (IconComponent) return <IconComponent className="w-6 h-6 text-foreground" />;
-    return icon;
+    return <span className="text-2xl leading-none">{icon}</span>;
   };
 
   return (
@@ -388,14 +399,42 @@ export default function CommunityDetailsPage() {
                   <p className="text-xs text-primary mt-1.5 font-medium">Normally requires 10,000 members. Unlocked for testing.</p>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-bold mb-2 text-foreground/80">Icon (Emoji fallback)</label>
-                  <input 
-                    type="text" 
-                    value={editForm.icon}
-                    onChange={e => setEditForm({...editForm, icon: e.target.value})}
-                    className="w-full bg-surface border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-3 text-foreground transition-all"
-                  />
+                <div className="col-span-1 md:col-span-2">
+                  <label className="block text-sm font-bold mb-2 text-foreground/80">Icon (Emoji fallback or Custom Emoji)</label>
+                  <div className="flex gap-3 items-center mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-surface border border-border/50 flex items-center justify-center overflow-hidden shrink-0 shadow-sm text-2xl">
+                      {editForm.icon ? renderCommunityIcon(editForm.icon) : "🌐"}
+                    </div>
+                    <input 
+                      type="text" 
+                      value={editForm.icon}
+                      onChange={e => setEditForm({...editForm, icon: e.target.value})}
+                      placeholder="Enter an emoji or select from pre-installed pack below"
+                      className="w-full bg-surface border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-3 text-foreground transition-all text-sm"
+                    />
+                  </div>
+                  
+                  {customEmojis.length > 0 && (
+                    <div className="bg-surface-secondary/40 p-4 rounded-2xl border border-border/50 mt-2">
+                      <p className="text-xs font-bold text-foreground/70 mb-3 uppercase tracking-wider">Pre-installed Emojis Pack</p>
+                      <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2.5 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
+                        {customEmojis.map((emoji) => (
+                          <button
+                            key={emoji.id}
+                            type="button"
+                            onClick={() => setEditForm({ ...editForm, icon: emoji.image_url })}
+                            className={`p-2 rounded-xl border transition flex flex-col items-center justify-center hover:border-primary/50 ${
+                              editForm.icon === emoji.image_url ? "border-primary bg-primary/10" : "border-border/30 bg-surface/40"
+                            }`}
+                            title={emoji.shortcode}
+                          >
+                            <img src={getMediaUrl(emoji.image_url)} alt={emoji.shortcode} className="w-7 h-7 object-contain mx-auto" />
+                            <span className="text-[8px] text-foreground/40 mt-1 truncate max-w-full">:{emoji.shortcode}:</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-surface-secondary/50 p-4 rounded-2xl border border-border/50">

@@ -144,8 +144,11 @@ export default function CommunitiesPage() {
     map_url: "",
     latitude: "",
     longitude: "",
+    avatar_url: "",
+    cover_url: ""
   });
   const [manualTags, setManualTags] = useState("");
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
 
   const fetchCommunities = async () => {
     try {
@@ -223,6 +226,28 @@ export default function CommunitiesPage() {
     }
   }, [showCreateModal, selectedCategory, form.topic_category_id, form.topic_subcategory_id]);
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, target: 'avatar' | 'cover') => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("type", "image");
+
+    setIsUploadingMedia(true);
+    const toastId = toast.loading(`Uploading ${target}...`);
+    try {
+      const res = await api.post("/media/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      const newUrl = res.data.data.url;
+      setForm(prev => ({ ...prev, [target === 'avatar' ? 'avatar_url' : 'cover_url']: newUrl }));
+      toast.success(`${target} uploaded successfully!`, { id: toastId });
+    } catch (err) {
+      toast.error("Failed to upload image", { id: toastId });
+    } finally {
+      setIsUploadingMedia(false);
+      e.target.value = '';
+    }
+  };
+
   const handleJoin = async (id: number) => {
     try {
       await api.post(`/communities/${id}/join`);
@@ -265,6 +290,8 @@ export default function CommunitiesPage() {
         map_url: form.location_mode === "OFFLINE" ? form.map_url.trim() || null : null,
         latitude: form.location_mode === "OFFLINE" && form.latitude.trim() ? Number(form.latitude) : null,
         longitude: form.location_mode === "OFFLINE" && form.longitude.trim() ? Number(form.longitude) : null,
+        avatar_url: form.avatar_url || null,
+        cover_url: form.cover_url || null,
       };
 
       await api.post("/communities", payload);
@@ -284,6 +311,8 @@ export default function CommunitiesPage() {
         map_url: "",
         latitude: "",
         longitude: "",
+        avatar_url: "",
+        cover_url: ""
       });
       setManualTags("");
       fetchCommunities();
@@ -475,6 +504,33 @@ export default function CommunitiesPage() {
                   onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
                   required
                 />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-surface-secondary/30 p-3 rounded-xl border border-border">
+                    <label className="block text-xs font-semibold mb-2 text-foreground/80">Avatar Image</label>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-surface border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                        {form.avatar_url ? <img src={getMediaUrl(form.avatar_url)} className="w-full h-full object-cover" alt="Avatar"/> : <Camera className="w-5 h-5 text-foreground/40"/>}
+                      </div>
+                      <label className={`cursor-pointer px-3 py-2 text-xs font-bold rounded-lg border border-border transition-all flex items-center gap-1.5 ${isUploadingMedia ? 'opacity-50 pointer-events-none' : 'hover:bg-surface-secondary hover:border-primary/50 text-foreground'}`}>
+                        <Camera className="w-3.5 h-3.5"/> {isUploadingMedia ? 'Uploading...' : 'Upload Avatar'}
+                        <input type="file" accept="image/*" className="hidden" onChange={e => handleFileSelect(e, 'avatar')} />
+                      </label>
+                    </div>
+                  </div>
+                  <div className="bg-surface-secondary/30 p-3 rounded-xl border border-border">
+                    <label className="block text-xs font-semibold mb-2 text-foreground/80">Cover Image</label>
+                    <div className="flex items-center gap-3">
+                      <div className="w-20 h-12 rounded-xl bg-surface border border-border flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                        {form.cover_url ? <img src={getMediaUrl(form.cover_url)} className="w-full h-full object-cover" alt="Cover"/> : <Camera className="w-5 h-5 text-foreground/40"/>}
+                      </div>
+                      <label className={`cursor-pointer px-3 py-2 text-xs font-bold rounded-lg border border-border transition-all flex items-center gap-1.5 ${isUploadingMedia ? 'opacity-50 pointer-events-none' : 'hover:bg-surface-secondary hover:border-primary/50 text-foreground'}`}>
+                        <Camera className="w-3.5 h-3.5"/> {isUploadingMedia ? 'Uploading...' : 'Upload Cover'}
+                        <input type="file" accept="image/*" className="hidden" onChange={e => handleFileSelect(e, 'cover')} />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label className="text-sm font-semibold text-foreground/90">Description</label>
                   <textarea
@@ -638,7 +694,7 @@ export default function CommunitiesPage() {
                 <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)}>
                   Cancel
                 </Button>
-                <GlowButton type="submit" variant="primary" disabled={isCreating}>
+                <GlowButton type="submit" variant="primary" disabled={isCreating || isUploadingMedia}>
                   {isCreating ? "Creating..." : "Create Community"}
                 </GlowButton>
               </div>

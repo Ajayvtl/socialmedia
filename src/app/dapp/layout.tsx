@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useSettings } from "@/context/SettingsContext";
 import Link from "next/link";
 import api, { getMediaUrl } from "@/lib/api";
 import { 
@@ -14,6 +15,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 export default function DappLayout({ children }: { children: React.ReactNode }) {
   const { user, token, logout } = useAuth();
+  const { settings } = useSettings();
   const router = useRouter();
   const pathname = usePathname();
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
@@ -114,10 +116,16 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
           {/* Logo & Close */}
           <div className="flex items-center justify-between px-6 py-8">
             <Link href="/dapp/feed" className="flex items-center gap-3">
-               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#00E5FF] via-[#8B5CF6] to-[#FF4D8D] flex items-center justify-center font-black text-xl shadow-[0_0_15px_rgba(139,92,246,0.5)]">
-                  A
+               <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center font-black shadow-lg overflow-hidden shrink-0">
+                 {settings?.logo ? (
+                   <img src={getMediaUrl(settings.logo)} className="w-full h-full object-cover" alt="Brand Logo" />
+                 ) : (
+                   <span className="text-xl bg-gradient-to-tr from-[#00E5FF] to-[#8B5CF6] text-transparent bg-clip-text">
+                     {settings?.brand_name?.charAt(0) || "A"}
+                   </span>
+                 )}
                </div>
-               <span className="text-2xl font-bold tracking-wider">AURORA</span>
+               <span className="text-2xl font-bold tracking-wider truncate">{settings?.brand_name || "AURORA"}</span>
             </Link>
             <button className="xl:hidden text-white/60 hover:text-white transition-colors" onClick={() => setIsMobileNavOpen(false)}>
               <X className="w-6 h-6" />

@@ -14,3 +14,5 @@ export const SpatialPhoto = ({ imageUrl, depthMapUrl }: { imageUrl: string, dept
     </div>
   );
 };
+
+// Trigger Vercel Build

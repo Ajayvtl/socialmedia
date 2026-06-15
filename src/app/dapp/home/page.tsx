@@ -29,48 +29,75 @@ export default function HomeDashboard() {
     try {
       setLoading(true);
       
-      // 1. Fetch family graph (for birthdays)
-      const graphRes = await api.get('/family-graph/me');
-      const relationships = graphRes.data?.data?.relationships || [];
-      
-      // Parse upcoming birthdays
+      let relationships: any[] = [];
       const today = new Date();
-      const birthdaysList = relationships
-        .filter((r: any) => r.dob)
-        .map((r: any) => {
-          const dobDate = new Date(r.dob);
-          const birthdayThisYear = new Date(today.getFullYear(), dobDate.getMonth(), dobDate.getDate());
-          if (birthdayThisYear < today) {
-            birthdayThisYear.setFullYear(today.getFullYear() + 1);
-          }
-          const diffTime = Math.abs(birthdayThisYear.getTime() - today.getTime());
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          return {
-            name: r.display_name || r.related_name || 'Family member',
-            relationship: r.relationship_type,
-            daysLeft: diffDays,
-            dateStr: dobDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-          };
-        })
-        .sort((a: any, b: any) => a.daysLeft - b.daysLeft)
-        .slice(0, 2);
-      
-      setUpcomingBirthdays(birthdaysList);
+
+      // 1. Fetch family graph (for birthdays)
+      try {
+        const graphRes = await api.get('/family-graph/me');
+        relationships = graphRes.data?.data?.relationships || [];
+        
+        // Parse upcoming birthdays
+        const birthdaysList = relationships
+          .filter((r: any) => r.dob)
+          .map((r: any) => {
+            const dobDate = new Date(r.dob);
+            const birthdayThisYear = new Date(today.getFullYear(), dobDate.getMonth(), dobDate.getDate());
+            if (birthdayThisYear < today) {
+              birthdayThisYear.setFullYear(today.getFullYear() + 1);
+            }
+            const diffTime = Math.abs(birthdayThisYear.getTime() - today.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return {
+              name: r.display_name || r.related_name || 'Family member',
+              relationship: r.relationship_type,
+              daysLeft: diffDays,
+              dateStr: dobDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+            };
+          })
+          .sort((a: any, b: any) => a.daysLeft - b.daysLeft)
+          .slice(0, 2);
+        
+        setUpcomingBirthdays(birthdaysList);
+      } catch (e) {
+        console.error("Failed to load family graph:", e);
+      }
 
       // 2. Fetch shared/tagged memories
-      const taggedRes = await api.get('/shared-memories/tagged/me');
-      setTaggedMemories(taggedRes.data?.data || []);
+      try {
+        const taggedRes = await api.get('/shared-memories/tagged/me');
+        setTaggedMemories(taggedRes.data?.data || []);
+      } catch (e) {
+        console.error("Failed to load tagged memories:", e);
+        setTaggedMemories([]);
+      }
 
       // 3. Fetch vaults for "Continue your story"
-      const vaultsRes = await api.get('/memory-wallet/vaults');
-      setVaults(vaultsRes.data?.data || []);
+      try {
+        const vaultsRes = await api.get('/memory-wallet/vaults');
+        setVaults(vaultsRes.data?.data || []);
+      } catch (e) {
+        console.error("Failed to load vaults:", e);
+        setVaults([]);
+      }
 
       // 4. Fetch events & stats
-      const eventsRes = await api.get('/events');
-      const events = eventsRes.data?.data || [];
+      let events: any[] = [];
+      let communities: any[] = [];
       
-      const communitiesRes = await api.get('/communities/my');
-      const communities = communitiesRes.data?.data || [];
+      try {
+        const eventsRes = await api.get('/events');
+        events = eventsRes.data?.data || [];
+      } catch (e) {
+        console.error("Failed to load events:", e);
+      }
+      
+      try {
+        const communitiesRes = await api.get('/communities/my');
+        communities = communitiesRes.data?.data || [];
+      } catch (e) {
+        console.error("Failed to load communities:", e);
+      }
 
       setStats({
         milestones: relationships.length,
@@ -79,7 +106,7 @@ export default function HomeDashboard() {
       });
 
     } catch (e) {
-      console.error("Failed to load home dashboard telemetry/data:", e);
+      console.error("Critical failure loading dashboard:", e);
     } finally {
       setLoading(false);
     }

@@ -766,7 +766,7 @@ export default function CommunityDetailsPage() {
                     </div>
                   </div>
                   {isAdmin && member.role !== 'ADMIN' && (
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="flex items-center gap-2">
                       <select
                         value={member.role}
                         onChange={(e) => handleRoleChange(member.user_id, e.target.value)}
@@ -777,7 +777,7 @@ export default function CommunityDetailsPage() {
                       </select>
                       <button 
                         onClick={() => handleRemoveMember(member.user_id)}
-                        className="p-1.5 text-red-400 hover:bg-red-400/10 rounded-md"
+                        className="p-1.5 text-red-400 hover:bg-red-400/10 rounded-md opacity-0 group-hover:opacity-100 transition-all"
                         title="Remove Member"
                       >
                         <Trash2 className="w-4 h-4" />

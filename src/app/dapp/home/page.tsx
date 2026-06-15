@@ -88,6 +88,22 @@ export default function HomeDashboard() {
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 animate-fade-in">
       
+      {/* MOBILE HEADER (Only on Home Page) */}
+      <div className="xl:hidden flex items-center justify-between bg-surface-secondary/30 backdrop-blur-md p-4 rounded-2xl border border-border/50 mb-6">
+        <span className="text-lg font-bold tracking-wider bg-gradient-to-tr from-[#00E5FF] to-[#8B5CF6] text-transparent bg-clip-text">AURORA</span>
+        <div className="flex items-center gap-4">
+          <Link href="/dapp/notifications" className="relative text-white/70 hover:text-white transition-colors">
+            <Sparkles className="w-5 h-5" />
+          </Link>
+          <Link href="/dapp/messages" className="relative text-white/70 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+          </Link>
+          <Link href="/dapp/profile" className="relative text-white/70 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </Link>
+        </div>
+      </div>
+
       {/* Welcome Header */}
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60">

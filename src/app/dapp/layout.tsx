@@ -239,35 +239,8 @@ export default function DappLayout({ children }: { children: React.ReactNode }) 
         </aside>
       )}
 
-      {/* MOBILE TOP NAVIGATION */}
-      {showNav && (
-        <div className="xl:hidden fixed top-0 left-0 w-full z-40 bg-[#050816]/90 backdrop-blur-md border-b border-white/[0.05] h-16 flex items-center justify-between px-4">
-          <Link href="/dapp/home" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-surface border border-border flex items-center justify-center font-black overflow-hidden shrink-0">
-              {settings?.logo ? (
-                <img src={getMediaUrl(settings.logo)} className="w-full h-full object-cover" alt="Brand Logo" />
-              ) : (
-                <span className="text-sm bg-gradient-to-tr from-[#00E5FF] to-[#8B5CF6] text-transparent bg-clip-text">
-                  {settings?.brand_name?.charAt(0) || "A"}
-                </span>
-              )}
-            </div>
-            <span className="text-lg font-bold tracking-wider truncate">{settings?.brand_name || "AURORA"}</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/dapp/notifications" className="relative text-white/70 hover:text-white transition-colors">
-              <Sparkles className="w-6 h-6" />
-              {/* Optional unread notification badge */}
-            </Link>
-            <button onClick={() => setIsMobileNavOpen(!isMobileNavOpen)} className="text-white/70 hover:text-white transition-colors">
-              <Menu className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* MAIN CONTENT AREA */}
-      <main className={`flex-1 relative w-full z-10 ${showNav ? 'xl:ml-[280px] pb-24 xl:pb-0 pt-16 xl:pt-0' : ''}`}>
+      <main className={`flex-1 relative w-full z-10 ${showNav ? 'xl:ml-[280px] pb-24 xl:pb-0' : ''}`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}

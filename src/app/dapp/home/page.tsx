@@ -3,7 +3,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
-import { Cake, CalendarDays, Heart, Share2, Sparkles, Star, Archive, Loader2 } from "lucide-react";
+import { Cake, CalendarDays, Heart, Share2, Sparkles, Star, Archive, Loader2, Search, Plus, Bell, MessageCircle } from "lucide-react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import Link from "next/link";
 

@@ -10,7 +10,7 @@ import { IconMap } from "@/lib/iconMapping";
 import { AnimatedContainer } from "@/components/ui/AnimatedContainer";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { GlowButton } from "@/components/ui/GlowButton";
-import { Users, Link as LinkIcon, QrCode, ShieldAlert, Trash2, ArrowLeft, Image as ImageIcon, Video, Send, Camera, UserPlus, MapPin } from "lucide-react";
+import { Users, Link as LinkIcon, QrCode, ShieldAlert, Trash2, ArrowLeft, Image as ImageIcon, Video, Send, Camera, UserPlus, MapPin, Search } from "lucide-react";
 import ImageCropperModal from "@/components/ui/ImageCropperModal";
 import { getCroppedImg } from "@/lib/cropImage";
 import RichTextEditor from "@/components/ui/RichTextEditor";
@@ -37,8 +37,9 @@ export default function CommunityDetailsPage() {
   const [isJoining, setIsJoining] = useState(false);
   
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', description: '', rules: '', icon: '', slug: '', avatar_url: '', cover_url: '' });
+  const [editForm, setEditForm] = useState({ name: '', description: '', rules: '', icon: '', slug: '', avatar_url: '', cover_url: '', is_private: 0, message_permission: 'MEMBER' });
   const [customEmojis, setCustomEmojis] = useState<any[]>([]);
+  const [emojiSearch, setEmojiSearch] = useState("");
 
   const [cropperOpen, setCropperOpen] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
@@ -83,7 +84,9 @@ export default function CommunityDetailsPage() {
         icon: cData.icon || '🌐',
         slug: cData.slug || '',
         avatar_url: cData.avatar_url || '',
-        cover_url: cData.cover_url || ''
+        cover_url: cData.cover_url || '',
+        is_private: cData.is_private ? 1 : 0,
+        message_permission: cData.message_permission || 'MEMBER',
       });
     } catch (err: any) {
       console.error(err);
@@ -416,9 +419,21 @@ export default function CommunityDetailsPage() {
                   
                   {customEmojis.length > 0 && (
                     <div className="bg-surface-secondary/40 p-4 rounded-2xl border border-border/50 mt-2">
-                      <p className="text-xs font-bold text-foreground/70 mb-3 uppercase tracking-wider">Pre-installed Emojis Pack</p>
-                      <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2.5 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
-                        {customEmojis.map((emoji) => (
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs font-bold text-foreground/70 uppercase tracking-wider">Pre-installed Emojis Pack</p>
+                        <div className="relative">
+                          <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-foreground/50" />
+                          <input
+                            type="text"
+                            placeholder="Search emojis..."
+                            value={emojiSearch}
+                            onChange={(e) => setEmojiSearch(e.target.value)}
+                            className="bg-surface border border-border/50 text-xs rounded-lg pl-7 pr-3 py-1.5 focus:outline-none focus:border-primary text-foreground w-40"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2.5 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                        {customEmojis.filter(e => e.shortcode.toLowerCase().includes(emojiSearch.toLowerCase())).map((emoji) => (
                           <button
                             key={emoji.id}
                             type="button"
@@ -429,9 +444,12 @@ export default function CommunityDetailsPage() {
                             title={emoji.shortcode}
                           >
                             <img src={getMediaUrl(emoji.image_url)} alt={emoji.shortcode} className="w-7 h-7 object-contain mx-auto" />
-                            <span className="text-[8px] text-foreground/40 mt-1 truncate max-w-full">:{emoji.shortcode}:</span>
+                            <span className="text-[8px] text-foreground/40 mt-1 truncate max-w-full w-full text-center">:{emoji.shortcode}:</span>
                           </button>
                         ))}
+                        {customEmojis.filter(e => e.shortcode.toLowerCase().includes(emojiSearch.toLowerCase())).length === 0 && (
+                          <div className="col-span-full py-4 text-center text-xs text-foreground/50">No emojis found matching "{emojiSearch}"</div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -482,6 +500,38 @@ export default function CommunityDetailsPage() {
                   rows={4}
                 />
               </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-surface-secondary/50 p-4 rounded-2xl border border-border/50 flex flex-col gap-2">
+                  <label className="text-sm font-bold text-foreground">Privacy Setting</label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={editForm.is_private === 1}
+                      onChange={(e) => setEditForm({...editForm, is_private: e.target.checked ? 1 : 0})}
+                      className="w-5 h-5 rounded border-border/50 text-primary focus:ring-primary/50 bg-surface"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-foreground">Private Community</span>
+                      <span className="text-xs text-foreground/50">Only approved members can join and view content.</span>
+                    </div>
+                  </label>
+                </div>
+                
+                <div className="bg-surface-secondary/50 p-4 rounded-2xl border border-border/50 flex flex-col gap-2">
+                  <label className="text-sm font-bold text-foreground">Messaging Permissions</label>
+                  <select 
+                    value={editForm.message_permission}
+                    onChange={(e) => setEditForm({...editForm, message_permission: e.target.value})}
+                    className="w-full bg-surface border border-border/50 focus:border-primary rounded-xl px-4 py-2.5 text-foreground text-sm"
+                  >
+                    <option value="MEMBER">All Members</option>
+                    <option value="ADMIN">Admins Only</option>
+                  </select>
+                  <span className="text-xs text-foreground/50">Who can post messages in the community feed.</span>
+                </div>
+              </div>
+
               <div className="flex justify-between items-center pt-4 border-t border-border mt-6">
                 <button 
                   type="button" 

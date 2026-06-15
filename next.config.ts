@@ -4,34 +4,18 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   async rewrites() {
-    // Only proxy on Vercel/Production. Locally, the browser will hit the API directly 
-    // or proxy to localhost to avoid ENOTFOUND tunnel DNS errors.
-    const isVercel = process.env.VERCEL === '1';
-    const isProd = process.env.NODE_ENV === 'production';
+    // ALWAYS proxy to the local backend running on port 4000 by default.
+    // This prevents circular routing if NEXT_PUBLIC_API_URL points to the Next.js frontend itself (e.g. via Cloudflare Tunnel).
+    const backendUrl = process.env.BACKEND_INTERNAL_URL || 'http://127.0.0.1:4000';
     
-    if ((isVercel || isProd) && process.env.NEXT_PUBLIC_API_URL) {
-      const backendBase = process.env.NEXT_PUBLIC_API_URL.replace(/\/api$/, '');
-      return [
-        {
-          source: '/api/:path*',
-          destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`
-        },
-        {
-          source: '/uploads/:path*',
-          destination: `${backendBase}/uploads/:path*`
-        }
-      ];
-    }
-    
-    // In local dev, point to local backend
     return [
       {
         source: '/api/:path*',
-        destination: `http://127.0.0.1:4000/api/:path*`
+        destination: `${backendUrl}/api/:path*`
       },
       {
         source: '/uploads/:path*',
-        destination: `http://127.0.0.1:4000/uploads/:path*`
+        destination: `${backendUrl}/uploads/:path*`
       }
     ];
   }

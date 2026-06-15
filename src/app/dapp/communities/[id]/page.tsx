@@ -138,6 +138,16 @@ export default function CommunityDetailsPage() {
     }
   };
 
+  const handleRoleChange = async (userId: number, newRole: string) => {
+    try {
+      await api.put(`/communities/${community.id}/members/${userId}/role`, { role: newRole });
+      toast.success("Role updated successfully");
+      fetchCommunityData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to update role");
+    }
+  };
+
   const handleUpdateCommunity = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -756,13 +766,23 @@ export default function CommunityDetailsPage() {
                     </div>
                   </div>
                   {isAdmin && member.role !== 'ADMIN' && (
-                    <button 
-                      onClick={() => handleRemoveMember(member.user_id)}
-                      className="p-1.5 text-red-400 hover:bg-red-400/10 rounded-md opacity-0 group-hover:opacity-100 transition-all"
-                      title="Remove Member"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                      <select
+                        value={member.role}
+                        onChange={(e) => handleRoleChange(member.user_id, e.target.value)}
+                        className="bg-surface border border-border/50 text-[10px] text-foreground rounded px-1.5 py-1 outline-none focus:border-primary"
+                      >
+                        <option value="MEMBER">Member</option>
+                        <option value="MODERATOR">Moderator</option>
+                      </select>
+                      <button 
+                        onClick={() => handleRemoveMember(member.user_id)}
+                        className="p-1.5 text-red-400 hover:bg-red-400/10 rounded-md"
+                        title="Remove Member"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
                 </div>
               ))}
@@ -817,6 +837,24 @@ export default function CommunityDetailsPage() {
                           <p className="text-xs text-foreground/60 font-bold tracking-widest uppercase">{member.role}</p>
                         </div>
                       </div>
+                      {isAdmin && member.role !== 'ADMIN' && (
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={member.role}
+                            onChange={(e) => handleRoleChange(member.user_id, e.target.value)}
+                            className="bg-surface border border-border/50 text-[10px] text-foreground rounded px-1.5 py-1 outline-none focus:border-primary"
+                          >
+                            <option value="MEMBER">Member</option>
+                            <option value="MODERATOR">Moderator</option>
+                          </select>
+                          <button 
+                            onClick={() => handleRemoveMember(member.user_id)}
+                            className="p-1.5 text-red-400 hover:bg-red-400/10 rounded-md"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

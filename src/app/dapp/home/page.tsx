@@ -69,7 +69,7 @@ export default function HomeDashboard() {
       const eventsRes = await api.get('/events');
       const events = eventsRes.data?.data || [];
       
-      const communitiesRes = await api.get('/communities');
+      const communitiesRes = await api.get('/communities/my');
       const communities = communitiesRes.data?.data || [];
 
       setStats({

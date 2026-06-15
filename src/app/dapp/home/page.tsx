@@ -86,20 +86,21 @@ export default function HomeDashboard() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 animate-fade-in">
+    <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 animate-fade-in pb-32">
       
-      {/* MOBILE HEADER (Only on Home Page) */}
-      <div className="xl:hidden flex items-center justify-between bg-surface-secondary/30 backdrop-blur-md p-4 rounded-2xl border border-border/50 mb-6">
-        <span className="text-lg font-bold tracking-wider bg-gradient-to-tr from-[#00E5FF] to-[#8B5CF6] text-transparent bg-clip-text">AURORA</span>
+      {/* MOBILE HEADER (Matches Feed/Discovery Page) */}
+      <div className="xl:hidden flex items-center justify-between py-3 mb-2 border-b border-white/5">
+        <div className="font-black text-2xl tracking-tighter bg-gradient-to-r from-[#00E5FF] to-[#8B5CF6] text-transparent bg-clip-text">
+          AURORA
+        </div>
         <div className="flex items-center gap-4">
-          <Link href="/dapp/notifications" className="relative text-white/70 hover:text-white transition-colors">
-            <Sparkles className="w-5 h-5" />
+          <button className="text-white/80 hover:text-white transition-colors relative"><Search className="w-6 h-6" /></button>
+          <button className="text-white/80 hover:text-white transition-colors relative"><Plus className="w-6 h-6" /></button>
+          <Link href="/dapp/notifications" className="text-white/80 hover:text-white transition-colors relative">
+            <Bell className="w-6 h-6" />
           </Link>
-          <Link href="/dapp/messages" className="relative text-white/70 hover:text-white transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
-          </Link>
-          <Link href="/dapp/profile" className="relative text-white/70 hover:text-white transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <Link href="/dapp/inbox" className="text-white/80 hover:text-white transition-colors relative">
+            <MessageCircle className="w-6 h-6" />
           </Link>
         </div>
       </div>

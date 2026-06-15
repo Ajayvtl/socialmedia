@@ -6,7 +6,7 @@ import { CheckCircle2, AlertTriangle, XCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const defaultOptions: ToastOptions = {
-  duration: 4000,
+  duration: 8000,
   position: "top-right",
 };
 

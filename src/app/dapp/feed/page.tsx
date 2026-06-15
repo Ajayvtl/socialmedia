@@ -699,15 +699,13 @@ export default function FeedPage() {
                       <span className="text-xs text-[#00E5FF] cursor-pointer hover:underline" onClick={markNotifsRead}>Mark all read</span>
                     </div>
                     <div className="max-h-[400px] overflow-y-auto hide-scrollbar">
-                      {notifications.filter((n: any) => !n.is_read || n.is_read === 0).length === 0 ? (
+                      {notifications.length === 0 ? (
                         <div className="p-8 text-center text-white/40 text-sm flex flex-col items-center">
                           <Bell className="w-8 h-8 mb-2 opacity-50" />
                           <p>No new notifications</p>
                         </div>
                       ) : (
-                        notifications
-                          .filter((notif: any) => !notif.is_read || notif.is_read === 0)
-                          .map((notif: any) => {
+                        notifications.map((notif: any) => {
                           let metaObj: any = null;
                           if (notif.meta) {
                             try {
@@ -717,7 +715,7 @@ export default function FeedPage() {
                           const isConnectionReq = notif.type === 'connection_request';
 
                           return (
-                            <div key={notif.id} className={`p-4 border-b border-white/5 flex gap-3 hover:bg-white/[0.02] transition-colors cursor-pointer ${notif.is_read ? 'opacity-70' : 'bg-[#00E5FF]/5'}`}>
+                            <div key={notif.id} className={`p-4 border-b border-white/5 flex gap-3 hover:bg-white/[0.02] transition-colors cursor-pointer ${notif.is_read ? 'opacity-50' : 'bg-[#00E5FF]/5'}`}>
                               {isConnectionReq && metaObj ? (
                                 <Link href={`/dapp/u/${metaObj.senderUsername}`} className="shrink-0" onClick={e => e.stopPropagation()}>
                                   <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 flex items-center justify-center bg-[#0b0e11] hover:scale-105 transition-transform">
@@ -729,7 +727,7 @@ export default function FeedPage() {
                                   </div>
                                 </Link>
                               ) : (
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF4D8D] to-[#8B5CF6] flex shrink-0 items-center justify-center mt-1">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF4D8D] to-[#8B5CF6] flex shrink-0 items-center justify-center mt-1 opacity-80">
                                   <Bell className="w-5 h-5 text-white" />
                                 </div>
                               )}
@@ -745,13 +743,13 @@ export default function FeedPage() {
                                         sent a request
                                       </p>
                                     ) : (
-                                      <p className="text-sm text-white font-medium mb-1">{notif.title}</p>
+                                      <p className={`text-sm ${notif.is_read ? 'text-white/80' : 'text-white'} font-medium mb-1`}>{notif.title}</p>
                                     )}
                                     <p className="text-xs text-white/60 line-clamp-2">{notif.message}</p>
                                     <p className="text-[10px] text-[#00E5FF] mt-1">{new Date(notif.created_at).toLocaleString()}</p>
                                   </div>
 
-                                  {isConnectionReq && metaObj && (
+                                  {isConnectionReq && metaObj && !notif.is_read && (
                                     <div className="flex gap-1.5 ml-2 mt-1 shrink-0">
                                       {actionedNotifs[notif.id] ? (
                                         <span className={`text-[10px] px-2 py-1 rounded-full font-bold border ${actionedNotifs[notif.id] === 'accepted' ? 'text-[#0ecb81] border-[#0ecb81]/30 bg-[#0ecb81]/10' : 'text-red-400 border-red-500/30 bg-red-500/10'}`}>

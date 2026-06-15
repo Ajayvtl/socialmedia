@@ -38,8 +38,8 @@ export async function generateMetadata(
       openGraph: {
         title: title,
         description: description,
-        url: `https://aurora.app/s/${token}`,
-        siteName: 'Aurora Memory Wallet',
+        url: `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://sm.cpayg.live'}/s/${token}`,
+        siteName: 'Shared Memory',
         images: [
           {
             url: imageUrl,
@@ -59,7 +59,7 @@ export async function generateMetadata(
     };
   } catch (error) {
     return {
-      title: 'Aurora Memory Wallet',
+      title: 'Shared Memory',
     };
   }
 }
@@ -95,9 +95,9 @@ export default async function PublicSharedMemoryPage({ params }: { params: { tok
         {/* Brand Header */}
         <div className="mb-8 flex items-center justify-center gap-2">
            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#FF4D8D] to-[#8B5CF6] flex items-center justify-center shadow-[0_0_20px_rgba(255,77,141,0.5)]">
-              <span className="text-white font-bold text-xs">A</span>
+              <span className="text-white font-bold text-xs">SM</span>
            </div>
-           <span className="text-white/80 font-bold tracking-widest uppercase text-sm">Aurora</span>
+           <span className="text-white/80 font-bold tracking-widest uppercase text-sm">Shared Memory</span>
         </div>
 
         {/* Dynamic Memory Card */}
@@ -139,7 +139,7 @@ export default async function PublicSharedMemoryPage({ params }: { params: { tok
               </div>
 
               <Link href="/auth/register" className="bg-white text-black px-6 py-2 rounded-full font-bold text-sm hover:bg-white/90 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-                Join Aurora to view Family Context
+                Join to view Family Context
               </Link>
             </div>
           </div>

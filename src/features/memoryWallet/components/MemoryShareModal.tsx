@@ -28,7 +28,7 @@ export const MemoryShareModal: React.FC<MemoryShareModalProps> = ({ item, onClos
 
   if (!item) return null;
 
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://aurora.app';
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://sm.cpayg.live');
   const shareUrl = shareToken ? `${baseUrl}/s/${shareToken}` : 'Generating link...';
   
   const handleCopy = () => {
@@ -98,15 +98,15 @@ export const MemoryShareModal: React.FC<MemoryShareModalProps> = ({ item, onClos
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <a href={shareToken ? `https://wa.me/?text=View%20this%20memory%20on%20Aurora:%20${shareUrl}` : '#'} target="_blank" rel="noopener noreferrer" className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] transition-colors ${!shareToken && 'opacity-50 pointer-events-none'}`}>
+            <a href={shareToken ? `https://wa.me/?text=View%20this%20memory:%20${shareUrl}` : '#'} target="_blank" rel="noopener noreferrer" className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] transition-colors ${!shareToken && 'opacity-50 pointer-events-none'}`}>
               <MessagesSquare className="w-6 h-6" />
               <span className="text-xs font-bold">WhatsApp</span>
             </a>
-            <a href={shareToken ? `https://twitter.com/intent/tweet?url=${shareUrl}&text=Check%20out%20this%20memory%20on%20Aurora` : '#'} target="_blank" rel="noopener noreferrer" className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-black hover:bg-white/5 border border-white/10 text-white transition-colors ${!shareToken && 'opacity-50 pointer-events-none'}`}>
+            <a href={shareToken ? `https://twitter.com/intent/tweet?url=${shareUrl}&text=Check%20out%20this%20memory` : '#'} target="_blank" rel="noopener noreferrer" className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-black hover:bg-white/5 border border-white/10 text-white transition-colors ${!shareToken && 'opacity-50 pointer-events-none'}`}>
               <Twitter className="w-6 h-6" />
               <span className="text-xs font-bold">X</span>
             </a>
-            <a href={shareToken ? `https://t.me/share/url?url=${shareUrl}&text=View%20this%20memory%20on%20Aurora` : '#'} target="_blank" rel="noopener noreferrer" className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-[#0088cc]/10 hover:bg-[#0088cc]/20 text-[#0088cc] transition-colors ${!shareToken && 'opacity-50 pointer-events-none'}`}>
+            <a href={shareToken ? `https://t.me/share/url?url=${shareUrl}&text=View%20this%20memory` : '#'} target="_blank" rel="noopener noreferrer" className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-[#0088cc]/10 hover:bg-[#0088cc]/20 text-[#0088cc] transition-colors ${!shareToken && 'opacity-50 pointer-events-none'}`}>
               <Send className="w-6 h-6" />
               <span className="text-xs font-bold">Telegram</span>
             </a>

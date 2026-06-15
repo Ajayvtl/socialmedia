@@ -77,7 +77,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         pathname === '/backend/login' ||
         pathname === '/developer/login' ||
         pathname === '/register' ||
-        pathname === '/dapp/login';
+        pathname === '/dapp/login' ||
+        pathname.startsWith('/s/'); // Public shared memories
 
     return (
         <ThemeProvider>

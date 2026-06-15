@@ -247,6 +247,7 @@ export default function DappLoginPage() {
                     value={identifier}
                     onChange={e => setIdentifier(e.target.value)}
                     placeholder="Enter your email or phone"
+                    autoComplete="username"
                     className={`w-full bg-black/20 border ${isValidId === false ? 'border-[#FF4D8D]' : isValidId === true ? 'border-[#00D97E]' : 'border-white/10'} rounded-2xl pl-12 pr-12 py-3.5 text-white placeholder-white/30 focus:border-[#00E5FF] outline-none transition-colors`}
                   />
                   {identifier.length > 0 && (
@@ -267,6 +268,7 @@ export default function DappLoginPage() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="Enter your password"
+                    autoComplete={step === "login" ? "current-password" : "new-password"}
                     className="w-full bg-black/20 border border-white/10 rounded-2xl pl-12 pr-12 py-3.5 text-white placeholder-white/30 focus:border-[#00E5FF] outline-none transition-colors"
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors">
